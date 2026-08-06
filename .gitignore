@@ -92,3 +92,7 @@ temp/
 
 # Node / web placeholders
 node_modules/
+
+# Agents file
+AGENTS.md
+CLAUDE.md
