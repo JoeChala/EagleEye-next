@@ -1,12 +1,94 @@
+# Python
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
-.env
-venv/
+*.py[cod]
+*$py.class
+.Python
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+.tox/
+.nox/
+.coverage
+.coverage.*
+htmlcov/
+.eggs/
+*.egg
+*.egg-info/
+build/
+dist/
+site/
 .venv/
-.idea/
+venv/
+env/
+ENV/
+.env
+.env.*
+!.env.example
+
+# Flutter / Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.fvm/
+.metadata
+build/
+coverage/
+ios/Pods/
+ios/.symlinks/
+android/.gradle/
+android/app/debug/
+android/app/profile/
+android/app/release/
+*.dart_tool/
+
+# VS Code
 .vscode/
-*.db
-logs/
-models/
+.history/
+
+# JetBrains
+.idea/
+*.iml
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+.Spotlight-V100
+.Trashes
+Thumbs.db
+Desktop.ini
+
+# Windows
+ehthumbs.db
+Thumbs.db
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+
+# Linux
+*~
+.fuse_hidden*
+.Trash-*/
+
+# Logs and runtime files
+*.log
+*.pid
+*.seed
+*.pid.lock
+
+# Local tooling
+.codex/
+.agents/
+
+# Build and deployment outputs
+coverage.xml
+reports/
+tmp/
+temp/
+.cache/
+
+# Node / web placeholders
+node_modules/
