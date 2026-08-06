@@ -1,2 +1,2 @@
-# TODO: Add core application infrastructure modules here.
+# TODO: Core application primitives live here.
 

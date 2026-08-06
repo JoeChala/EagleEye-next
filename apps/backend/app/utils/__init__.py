@@ -1,2 +1,2 @@
-# TODO: Add reusable utility helpers here.
+# TODO: Utility helpers package.
 
