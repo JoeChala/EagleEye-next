@@ -1,5 +1,5 @@
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from typing import AsyncIterator
 
 from fastapi import FastAPI
 
@@ -30,4 +30,3 @@ app = FastAPI(
 app.add_middleware(RequestIdMiddleware)
 app.include_router(api_router)
 register_exception_handlers(app)
-

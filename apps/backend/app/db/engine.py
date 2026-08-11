@@ -9,7 +9,7 @@ from app.core.config import settings
 
 def _normalize_database_url(database_url: str) -> str:
     # Normalize PostgreSQL URLs for SQLAlchemy async support.
-    
+
     database_url = database_url.strip()
 
     if database_url.startswith("postgres://"):

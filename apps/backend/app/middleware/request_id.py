@@ -5,7 +5,6 @@ from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response
 
-
 REQUEST_ID_HEADER = "X-Request-ID"
 request_id_context: ContextVar[str | None] = ContextVar("request_id", default=None)
 
@@ -25,4 +24,3 @@ class RequestIdMiddleware(BaseHTTPMiddleware):
             request_id_context.reset(token)
         response.headers[REQUEST_ID_HEADER] = request_id
         return response
-

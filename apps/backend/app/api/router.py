@@ -3,8 +3,7 @@ from fastapi.responses import JSONResponse
 
 from app.core.config import settings
 from app.db.session import check_database_connection
-from app.utils.responses import error_response
-from app.utils.responses import success_response
+from app.utils.responses import error_response, success_response
 
 api_router = APIRouter(prefix=settings.api_prefix)
 

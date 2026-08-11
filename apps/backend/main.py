@@ -1,6 +1,3 @@
-from app.main import app
-
-
 def main() -> None:
     import uvicorn
 
@@ -9,4 +6,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

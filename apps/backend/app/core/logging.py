@@ -35,4 +35,3 @@ def configure_logging() -> logging.Logger:
 
 
 logger = configure_logging()
-
