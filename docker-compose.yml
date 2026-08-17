@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   backend:
     build:
@@ -7,7 +5,7 @@ services:
       dockerfile: Dockerfile
     container_name: eagleeye-backend
     env_file:
-      - .env.example
+      - .env
     ports:
       - "8000:8000"
     volumes:
@@ -18,7 +16,7 @@ services:
       - redis
 
   postgres:
-    image: postgres:16-alpine
+    image: postgres:16
     container_name: eagleeye-postgres
     environment:
       POSTGRES_DB: eagleeye
