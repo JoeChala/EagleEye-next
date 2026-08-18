@@ -33,6 +33,7 @@ jobs:
 
     env:
       DATABASE_URL: postgresql+asyncpg://eagleeye:eagleeye@localhost:5432/eagleeye_test
+      TEST_DATABASE_URL: postgresql+asyncpg://eagleeye:eagleeye@localhost:5432/eagleeye_test
 
     defaults:
       run:
