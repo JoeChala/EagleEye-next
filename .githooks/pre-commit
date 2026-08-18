@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+set -e
+
+echo "Running Ruff formatter..."
+
+cd apps/backend
+
+uv run ruff format .
+
+echo "Running Ruff linter..."
+
+uv run ruff check . --fix
+
+echo "Verifying formatting..."
+
+uv run ruff format --check .
+
+echo "Verifying linting..."
+
+uv run ruff check .
+
+cd ../..
+
+echo "Staging Ruff changes..."
+
+git add apps/backend
+
+echo "Pre-commit checks passed."

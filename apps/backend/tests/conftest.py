@@ -2,6 +2,7 @@ import os
 from collections.abc import AsyncGenerator
 
 import pytest_asyncio
+from dotenv import load_dotenv
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
@@ -9,6 +10,7 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
+load_dotenv()
 TEST_DATABASE_URL = os.environ["TEST_DATABASE_URL"]
 
 
