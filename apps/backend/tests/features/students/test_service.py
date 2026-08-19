@@ -1,6 +1,8 @@
+from uuid import uuid4
+
 import pytest
 
-from app.exceptions.student import StudentAlreadyExistsError
+from app.exceptions.student import StudentAlreadyExistsError, StudentNotFoundError
 from app.features.students.service import StudentService
 from app.models.student import Student
 
@@ -31,3 +33,10 @@ async def test_student_already_exists_error(db_session):
 
     with pytest.raises(StudentAlreadyExistsError):
         await service.register_student(student2)
+
+
+@pytest.mark.asyncio
+async def test_student_not_found_error(db_session):
+    service = StudentService(db_session)
+    with pytest.raises(StudentNotFoundError):
+        await service.get_student(uuid4())

@@ -1,3 +1,5 @@
+import uuid
+
 import pytest
 
 from app.features.students.repository import StudentRepository
@@ -51,3 +53,30 @@ async def test_create_student(db_session):
 
     assert student.id is not None
     assert student.roll_number == "TEST004"
+
+
+@pytest.mark.asyncio
+async def test_get_student_by_id(db_session):
+    repository = StudentRepository(db_session)
+    student_details = Student(
+        roll_number="TEST005",
+        name="Student Creation Test",
+        email="repository@example.com",
+        department="CSE",
+        semester=5,
+        section="A",
+    )
+    student = await repository.create(student_details)
+
+    test_student = await repository.get_by_id(student.id)
+
+    assert test_student is not None
+    assert test_student.id == student.id
+
+
+@pytest.mark.asyncio
+async def test_get_student_by_random_id(db_session):
+    repository = StudentRepository(db_session)
+    student = await repository.get_by_id(uuid.uuid4())
+
+    assert student is None

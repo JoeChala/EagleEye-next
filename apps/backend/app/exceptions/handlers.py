@@ -5,7 +5,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from app.core.logging import logger
-from app.exceptions.student import StudentAlreadyExistsError
+from app.exceptions.student import StudentAlreadyExistsError, StudentNotFoundError
 from app.utils.responses import error_response
 
 
@@ -16,7 +16,7 @@ def _http_exception_handler(_: Request, exc: Exception) -> JSONResponse:
     if isinstance(error.detail, list):
         errors = error.detail
         message = "Request failed"
-    return error_response(message=message, errors=errors, status_code=exc.status_code)
+    return error_response(message=message, errors=errors, status_code=error.status_code)
 
 
 def _validation_exception_handler(_: Request, exc: Exception) -> JSONResponse:
@@ -47,6 +47,16 @@ def _student_already_exists_handler(request: Request, exc: Exception) -> JSONRes
     )
 
 
+def _student_not_found(request: Request, exc: Exception) -> JSONResponse:
+    error = cast(StudentNotFoundError, exc)
+    return JSONResponse(
+        status_code=404,
+        content={
+            "deatil": str(error),
+        },
+    )
+
+
 def register_exception_handlers(app: FastAPI) -> None:
     app.add_exception_handler(HTTPException, _http_exception_handler)
     app.add_exception_handler(RequestValidationError, _validation_exception_handler)
@@ -54,3 +64,4 @@ def register_exception_handlers(app: FastAPI) -> None:
     app.add_exception_handler(
         StudentAlreadyExistsError, _student_already_exists_handler
     )
+    app.add_exception_handler(StudentNotFoundError, _student_not_found)

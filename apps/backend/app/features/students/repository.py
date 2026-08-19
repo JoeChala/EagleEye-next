@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -20,3 +22,10 @@ class StudentRepository:
         await self.session.flush()  # only the service commits transaction
 
         return student
+
+    async def get_by_id(self, student_id: UUID) -> Student | None:
+        result = await self.session.execute(
+            select(Student).where(Student.id == student_id)
+        )
+
+        return result.scalar_one_or_none()
