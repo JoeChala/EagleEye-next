@@ -16,8 +16,4 @@ class StudentService:
         if existing_student is not None:
             raise StudentAlreadyExistsError(student.roll_number)
 
-        student = await self.repository.create(student)
-
-        await self.session.commit()  # service is the only owner of the transaction
-
-        return student
+        return await self.repository.create(student)
