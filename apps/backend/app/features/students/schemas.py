@@ -26,3 +26,10 @@ class StudentResponse(BaseModel):
     is_active: bool
     created_at: datetime
     updated_at: datetime
+
+
+class StudentListResponse(BaseModel):
+    items: list[StudentResponse]
+    total: int
+    offset: int
+    limit: int

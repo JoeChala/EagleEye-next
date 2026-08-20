@@ -27,3 +27,15 @@ class StudentService:
             raise StudentNotFoundError(student_id)
 
         return student
+
+    async def get_students(
+        self, offset: int = 0, limit: int = 20
+    ) -> tuple[list[Student], int]:
+        students = await self.repository.get_all(
+            offset=offset,
+            limit=limit,
+        )
+
+        total = await self.repository.count()
+
+        return students, total

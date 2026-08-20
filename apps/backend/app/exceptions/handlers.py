@@ -52,7 +52,7 @@ def _student_not_found(request: Request, exc: Exception) -> JSONResponse:
     return JSONResponse(
         status_code=404,
         content={
-            "deatil": str(error),
+            "detail": str(error),
         },
     )
 

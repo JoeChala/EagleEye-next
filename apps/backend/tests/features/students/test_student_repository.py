@@ -80,3 +80,36 @@ async def test_get_student_by_random_id(db_session):
     student = await repository.get_by_id(uuid.uuid4())
 
     assert student is None
+
+
+@pytest.mark.asyncio
+async def test_get_all_students(db_session):
+    repository = StudentRepository(db_session)
+
+    student1 = Student(
+        roll_number="TEST006",
+        name="Student One",
+        email="student1@example.com",
+        department="CSE",
+        semester=5,
+        section="A",
+    )
+
+    student2 = Student(
+        roll_number="TEST007",
+        name="Student Two",
+        email="student2@example.com",
+        department="CSE",
+        semester=6,
+        section="B",
+    )
+
+    await repository.create(student1)
+    await repository.create(student2)
+
+    students = await repository.get_all()
+
+    roll_numbers = {student.roll_number for student in students}
+
+    assert "TEST006" in roll_numbers
+    assert "TEST007" in roll_numbers

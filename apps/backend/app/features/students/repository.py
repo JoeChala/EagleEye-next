@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.student import Student
@@ -29,3 +29,18 @@ class StudentRepository:
         )
 
         return result.scalar_one_or_none()
+
+    async def get_all(self, offset: int = 0, limit: int = 20) -> list[Student]:
+        result = await self.session.execute(
+            select(Student)
+            .order_by(Student.created_at.desc())
+            .offset(offset)
+            .limit(limit)
+        )
+
+        return list(result.scalars().all())
+
+    async def count(self) -> int:
+        result = await self.session.execute(select(func.count()).select_from(Student))
+
+        return result.scalar_one()
