@@ -63,13 +63,20 @@ async def get_student(
 async def get_students(
     offset: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
+    department: str | None = Query(default=None),
+    semester: int | None = Query(default=None, ge=1, le=8),
+    section: str | None = Query(default=None),
     session: AsyncSession = Depends(get_db),
 ) -> StudentListResponse:
+
     service = StudentService(session)
 
     students, total = await service.get_students(
         offset=offset,
         limit=limit,
+        department=department,
+        semester=semester,
+        section=section,
     )
 
     return StudentListResponse(

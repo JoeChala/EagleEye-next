@@ -305,3 +305,141 @@ async def test_deactivate_student_not_found(
     assert response.json() == {
         "detail": f"Student with id '{student_id}' was not found"
     }
+
+
+@pytest.mark.asyncio
+async def test_get_students_by_department(
+    client: AsyncClient,
+):
+    response = await client.get("/api/v1/students?department=CSE")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert "items" in data
+    assert "total" in data
+
+    for student in data["items"]:
+        assert student["department"] == "CSE"
+
+
+@pytest.mark.asyncio
+async def test_get_students_by_semester(
+    client: AsyncClient,
+):
+    response = await client.get("/api/v1/students?semester=5")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    for student in data["items"]:
+        assert student["semester"] == 5
+
+
+@pytest.mark.asyncio
+async def test_get_students_by_section(
+    client: AsyncClient,
+):
+    response = await client.get("/api/v1/students?section=A")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    for student in data["items"]:
+        assert student["section"] == "A"
+
+
+@pytest.mark.asyncio
+async def test_get_students_with_multiple_filters(
+    client: AsyncClient,
+):
+    response = await client.get("/api/v1/students?department=CSE&semester=5&section=A")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    for student in data["items"]:
+        assert student["department"] == "CSE"
+        assert student["semester"] == 5
+        assert student["section"] == "A"
+
+
+@pytest.mark.asyncio
+async def test_students_filter_with_pagination(
+    client: AsyncClient,
+):
+    response = await client.get("/api/v1/students?department=CSE&offset=0&limit=5")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["offset"] == 0
+    assert data["limit"] == 5
+    assert len(data["items"]) <= 5
+
+    for student in data["items"]:
+        assert student["department"] == "CSE"
+
+
+@pytest.mark.asyncio
+async def test_get_students_with_no_matching_department(
+    client: AsyncClient,
+):
+    response = await client.get("/api/v1/students?department=NONEXISTENT")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["items"] == []
+    assert data["total"] == 0
+
+
+@pytest.mark.asyncio
+async def test_get_students_invalid_semester(
+    client: AsyncClient,
+):
+    response = await client.get("/api/v1/students?semester=0")
+
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_get_students_semester_above_maximum(
+    client: AsyncClient,
+):
+    response = await client.get("/api/v1/students?semester=9")
+
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_get_students_negative_offset(
+    client: AsyncClient,
+):
+    response = await client.get("/api/v1/students?offset=-1")
+
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_get_students_invalid_limit(
+    client: AsyncClient,
+):
+    response = await client.get("/api/v1/students?limit=0")
+
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_get_students_limit_too_large(
+    client: AsyncClient,
+):
+    response = await client.get("/api/v1/students?limit=101")
+
+    assert response.status_code == 422

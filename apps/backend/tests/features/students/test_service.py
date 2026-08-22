@@ -138,3 +138,40 @@ async def test_deactivate_student_not_found(db_session):
 
     with pytest.raises(StudentNotFoundError):
         await service.deactivate_student(student_id)
+
+
+@pytest.mark.asyncio
+async def test_get_students_with_filters(
+    db_session,
+):
+    service = StudentService(db_session)
+
+    await service.register_student(
+        Student(
+            roll_number="SERVICEFILTER001",
+            name="CSE Student",
+            email="servicefilter1@example.com",
+            department="CSE",
+            semester=5,
+            section="A",
+        )
+    )
+
+    await service.register_student(
+        Student(
+            roll_number="SERVICEFILTER002",
+            name="ECE Student",
+            email="servicefilter2@example.com",
+            department="ECE",
+            semester=5,
+            section="A",
+        )
+    )
+
+    students, total = await service.get_students(
+        department="CSE",
+    )
+
+    assert total == 1
+    assert len(students) == 1
+    assert students[0].department == "CSE"

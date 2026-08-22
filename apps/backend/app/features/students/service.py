@@ -29,14 +29,27 @@ class StudentService:
         return student
 
     async def get_students(
-        self, offset: int = 0, limit: int = 20
+        self,
+        offset: int = 0,
+        limit: int = 20,
+        department: str | None = None,
+        semester: int | None = None,
+        section: str | None = None,
     ) -> tuple[list[Student], int]:
+
         students = await self.repository.get_all(
             offset=offset,
             limit=limit,
+            department=department,
+            semester=semester,
+            section=section,
         )
 
-        total = await self.repository.count()
+        total = await self.repository.count(
+            department=department,
+            semester=semester,
+            section=section,
+        )
 
         return students, total
 

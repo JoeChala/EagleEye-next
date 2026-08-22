@@ -188,3 +188,307 @@ async def test_deactivate_student_not_found(db_session):
     result = await repository.deactivate(uuid.uuid4())
 
     assert result is None
+
+
+@pytest.mark.asyncio
+async def test_get_students_by_department(db_session):
+    repository = StudentRepository(db_session)
+
+    await repository.create(
+        Student(
+            roll_number="FILTER001",
+            name="CSE Student",
+            email="filter1@example.com",
+            department="CSE",
+            semester=5,
+            section="A",
+        )
+    )
+
+    await repository.create(
+        Student(
+            roll_number="FILTER002",
+            name="ECE Student",
+            email="filter2@example.com",
+            department="ECE",
+            semester=5,
+            section="A",
+        )
+    )
+
+    students = await repository.get_all(
+        department="CSE",
+    )
+
+    assert len(students) == 1
+    assert students[0].roll_number == "FILTER001"
+
+
+@pytest.mark.asyncio
+async def test_get_students_by_semester(db_session):
+    repository = StudentRepository(db_session)
+
+    await repository.create(
+        Student(
+            roll_number="FILTER003",
+            name="Semester Five",
+            email="filter3@example.com",
+            department="CSE",
+            semester=5,
+            section="A",
+        )
+    )
+
+    await repository.create(
+        Student(
+            roll_number="FILTER004",
+            name="Semester Six",
+            email="filter4@example.com",
+            department="CSE",
+            semester=6,
+            section="A",
+        )
+    )
+
+    students = await repository.get_all(
+        semester=5,
+    )
+
+    assert len(students) == 1
+    assert students[0].semester == 5
+
+
+@pytest.mark.asyncio
+async def test_get_students_by_section(db_session):
+    repository = StudentRepository(db_session)
+
+    await repository.create(
+        Student(
+            roll_number="FILTER005",
+            name="Section A",
+            email="filter5@example.com",
+            department="CSE",
+            semester=5,
+            section="A",
+        )
+    )
+
+    await repository.create(
+        Student(
+            roll_number="FILTER006",
+            name="Section B",
+            email="filter6@example.com",
+            department="CSE",
+            semester=5,
+            section="B",
+        )
+    )
+
+    students = await repository.get_all(
+        section="A",
+    )
+
+    assert len(students) == 1
+    assert students[0].roll_number == "FILTER005"
+
+
+@pytest.mark.asyncio
+async def test_get_students_with_multiple_filters(db_session):
+    repository = StudentRepository(db_session)
+
+    await repository.create(
+        Student(
+            roll_number="FILTER007",
+            name="Matching Student",
+            email="filter7@example.com",
+            department="CSE",
+            semester=5,
+            section="A",
+        )
+    )
+
+    await repository.create(
+        Student(
+            roll_number="FILTER008",
+            name="Wrong Semester",
+            email="filter8@example.com",
+            department="CSE",
+            semester=6,
+            section="A",
+        )
+    )
+
+    await repository.create(
+        Student(
+            roll_number="FILTER009",
+            name="Wrong Department",
+            email="filter9@example.com",
+            department="ECE",
+            semester=5,
+            section="A",
+        )
+    )
+
+    students = await repository.get_all(
+        department="CSE",
+        semester=5,
+        section="A",
+    )
+
+    assert len(students) == 1
+    assert students[0].roll_number == "FILTER007"
+
+
+@pytest.mark.asyncio
+async def test_get_students_with_no_matches(db_session):
+    repository = StudentRepository(db_session)
+
+    await repository.create(
+        Student(
+            roll_number="FILTER010",
+            name="CSE Student",
+            email="filter10@example.com",
+            department="CSE",
+            semester=5,
+            section="A",
+        )
+    )
+
+    students = await repository.get_all(
+        department="MECH",
+    )
+
+    assert students == []
+
+
+@pytest.mark.asyncio
+async def test_get_students_excludes_inactive_students(
+    db_session,
+):
+    repository = StudentRepository(db_session)
+
+    student = await repository.create(
+        Student(
+            roll_number="FILTER011",
+            name="Inactive Student",
+            email="filter11@example.com",
+            department="CSE",
+            semester=5,
+            section="A",
+        )
+    )
+
+    await repository.deactivate(student.id)
+
+    students = await repository.get_all(
+        department="CSE",
+    )
+
+    assert all(student.roll_number != "FILTER011" for student in students)
+
+
+@pytest.mark.asyncio
+async def test_count_students_by_department(db_session):
+    repository = StudentRepository(db_session)
+
+    await repository.create(
+        Student(
+            roll_number="COUNT001",
+            name="CSE Student 1",
+            email="count1@example.com",
+            department="CSE",
+            semester=5,
+            section="A",
+        )
+    )
+
+    await repository.create(
+        Student(
+            roll_number="COUNT002",
+            name="CSE Student 2",
+            email="count2@example.com",
+            department="CSE",
+            semester=6,
+            section="B",
+        )
+    )
+
+    await repository.create(
+        Student(
+            roll_number="COUNT003",
+            name="ECE Student",
+            email="count3@example.com",
+            department="ECE",
+            semester=5,
+            section="A",
+        )
+    )
+
+    count = await repository.count(
+        department="CSE",
+    )
+
+    assert count == 2
+
+
+@pytest.mark.asyncio
+async def test_count_students_with_multiple_filters(
+    db_session,
+):
+    repository = StudentRepository(db_session)
+
+    await repository.create(
+        Student(
+            roll_number="COUNT004",
+            name="Matching",
+            email="count4@example.com",
+            department="CSE",
+            semester=5,
+            section="A",
+        )
+    )
+
+    await repository.create(
+        Student(
+            roll_number="COUNT005",
+            name="Wrong Section",
+            email="count5@example.com",
+            department="CSE",
+            semester=5,
+            section="B",
+        )
+    )
+
+    count = await repository.count(
+        department="CSE",
+        semester=5,
+        section="A",
+    )
+
+    assert count == 1
+
+
+@pytest.mark.asyncio
+async def test_count_excludes_inactive_students(
+    db_session,
+):
+    repository = StudentRepository(db_session)
+
+    student = await repository.create(
+        Student(
+            roll_number="COUNT006",
+            name="Inactive",
+            email="count6@example.com",
+            department="CSE",
+            semester=5,
+            section="A",
+        )
+    )
+
+    await repository.deactivate(student.id)
+
+    count = await repository.count(
+        department="CSE",
+    )
+
+    assert count == 0
