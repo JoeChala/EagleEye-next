@@ -166,3 +166,142 @@ async def test_get_students_pagination(client: AsyncClient):
     assert len(data["items"]) == 1
     assert data["offset"] == 1
     assert data["limit"] == 1
+
+
+@pytest.mark.asyncio
+async def test_update_student(client: AsyncClient):
+    create_response = await client.post(
+        "/api/v1/students",
+        json={
+            "roll_number": "API006",
+            "name": "Before Update",
+            "email": "update-api@example.com",
+            "department": "CSE",
+            "semester": 5,
+            "section": "A",
+        },
+    )
+
+    assert create_response.status_code == 201
+
+    student = create_response.json()
+
+    response = await client.patch(
+        f"/api/v1/students/{student['id']}",
+        json={
+            "name": "After Update",
+            "semester": 6,
+            "section": "B",
+        },
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["id"] == student["id"]
+    assert data["name"] == "After Update"
+    assert data["semester"] == 6
+    assert data["section"] == "B"
+
+    # roll number should remain unchanged
+    assert data["roll_number"] == "API006"
+
+
+@pytest.mark.asyncio
+async def test_update_student_not_found(client: AsyncClient):
+    student_id = uuid.uuid4()
+
+    response = await client.patch(
+        f"/api/v1/students/{student_id}",
+        json={
+            "name": "Does Not Exist",
+        },
+    )
+
+    assert response.status_code == 404
+
+    assert response.json() == {
+        "detail": f"Student with id '{student_id}' was not found"
+    }
+
+
+@pytest.mark.asyncio
+async def test_deactivate_student(client: AsyncClient):
+    create_response = await client.post(
+        "/api/v1/students",
+        json={
+            "roll_number": "API007",
+            "name": "Deactivate Test",
+            "email": "deactivate@example.com",
+            "department": "CSE",
+            "semester": 5,
+            "section": "A",
+        },
+    )
+
+    assert create_response.status_code == 201
+
+    student = create_response.json()
+
+    assert student["is_active"] is True
+
+    response = await client.delete(f"/api/v1/students/{student['id']}")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["id"] == student["id"]
+    assert data["roll_number"] == "API007"
+    assert data["is_active"] is False
+
+
+@pytest.mark.asyncio
+async def test_deactivated_student_not_in_list(
+    client: AsyncClient,
+):
+    create_response = await client.post(
+        "/api/v1/students",
+        json={
+            "roll_number": "API008",
+            "name": "Inactive Student",
+            "email": "inactive@example.com",
+            "department": "CSE",
+            "semester": 5,
+            "section": "A",
+        },
+    )
+
+    assert create_response.status_code == 201
+
+    student = create_response.json()
+
+    delete_response = await client.delete(f"/api/v1/students/{student['id']}")
+
+    assert delete_response.status_code == 200
+
+    list_response = await client.get("/api/v1/students")
+
+    assert list_response.status_code == 200
+
+    data = list_response.json()
+
+    roll_numbers = [item["roll_number"] for item in data["items"]]
+
+    assert "API008" not in roll_numbers
+
+
+@pytest.mark.asyncio
+async def test_deactivate_student_not_found(
+    client: AsyncClient,
+):
+    student_id = uuid.uuid4()
+
+    response = await client.delete(f"/api/v1/students/{student_id}")
+
+    assert response.status_code == 404
+
+    assert response.json() == {
+        "detail": f"Student with id '{student_id}' was not found"
+    }

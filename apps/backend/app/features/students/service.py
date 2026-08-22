@@ -39,3 +39,26 @@ class StudentService:
         total = await self.repository.count()
 
         return students, total
+
+    async def update_student(
+        self,
+        student_id: UUID,
+        updates: dict,
+    ) -> Student:
+        student = await self.repository.update_by_id(
+            student_id,
+            updates,
+        )
+
+        if student is None:
+            raise StudentNotFoundError(student_id)
+
+        return student
+
+    async def deactivate_student(self, student_id: UUID) -> Student:
+        student = await self.repository.deactivate(student_id)
+
+        if student is None:
+            raise StudentNotFoundError(student_id)
+
+        return student

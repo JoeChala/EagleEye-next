@@ -56,3 +56,21 @@ async def test_student_roll_number_must_be_unique(db_session):
         await db_session.flush()
 
     await db_session.rollback()
+
+
+@pytest.mark.asyncio
+async def test_student_is_active_defaults_to_true(db_session):
+    student = Student(
+        roll_number="MODEL001",
+        name="Default Active Test",
+        email="model@example.com",
+        department="CSE",
+        semester=5,
+        section="A",
+    )
+
+    db_session.add(student)
+    await db_session.flush()
+    await db_session.refresh(student)
+
+    assert student.is_active is True

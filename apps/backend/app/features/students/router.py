@@ -8,6 +8,7 @@ from app.features.students.schemas import (
     StudentCreate,
     StudentListResponse,
     StudentResponse,
+    StudentUpdate,
 )
 from app.features.students.service import StudentService
 from app.models.student import Student
@@ -56,12 +57,8 @@ async def get_student(
 
 @router.get(
     "",
-    response_model=list[StudentResponse],
-    status_code=status.HTTP_200_OK,
-)
-@router.get(
-    "",
     response_model=StudentListResponse,
+    status_code=status.HTTP_200_OK,
 )
 async def get_students(
     offset: int = Query(0, ge=0),
@@ -81,3 +78,44 @@ async def get_students(
         offset=offset,
         limit=limit,
     )
+
+
+@router.patch(
+    "/{student_id}",
+    response_model=StudentResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def update_student(
+    student_id: UUID,
+    student_data: StudentUpdate,
+    session: AsyncSession = Depends(get_db),
+) -> StudentResponse:
+    service = StudentService(session)
+
+    updates = student_data.model_dump(exclude_unset=True)
+
+    student = await service.update_student(
+        student_id,
+        updates,
+    )
+
+    await session.commit()
+
+    return StudentResponse.model_validate(student)
+
+
+@router.delete(
+    "/{student_id}",
+    response_model=StudentResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def deactivate_student(
+    student_id: UUID, session: AsyncSession = Depends(get_db)
+) -> StudentResponse:
+    service = StudentService(session)
+
+    student = await service.deactivate_student(student_id)
+
+    await session.commit()
+
+    return StudentResponse.model_validate(student)

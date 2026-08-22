@@ -33,3 +33,11 @@ class StudentListResponse(BaseModel):
     total: int
     offset: int
     limit: int
+
+
+class StudentUpdate(BaseModel):
+    name: str | None = None
+    email: EmailStr | None = None
+    department: str | None = None
+    semester: int | None = Field(default=None, ge=1, le=8)
+    section: str | None = None

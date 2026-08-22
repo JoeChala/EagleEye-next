@@ -36,6 +36,7 @@ class StudentRepository:
             .order_by(Student.created_at.desc())
             .offset(offset)
             .limit(limit)
+            .where(Student.is_active.is_(True))
         )
 
         return list(result.scalars().all())
@@ -44,3 +45,32 @@ class StudentRepository:
         result = await self.session.execute(select(func.count()).select_from(Student))
 
         return result.scalar_one()
+
+    async def update_by_id(self, student_id: UUID, updates: dict) -> Student | None:
+        student = await self.get_by_id(student_id)
+
+        if student is None:
+            return None
+
+        for field, value in updates.items():
+            setattr(student, field, value)
+
+        await self.session.flush()
+        await self.session.refresh(student)  # refresh before flushing
+        # after SQL execution Python obj may not have new value
+
+        return student
+
+    async def deactivate(self, student_id: UUID) -> Student | None:
+        # soft deletion
+        student = await self.get_by_id(student_id)
+
+        if student is None:
+            return None
+
+        student.is_active = False
+
+        await self.session.flush()
+        await self.session.refresh(student)
+
+        return student
