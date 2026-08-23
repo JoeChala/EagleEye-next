@@ -1,8 +1,9 @@
 from uuid import UUID
 
-from apps.backend.app.features.students.model import Student
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.features.students.model import Student
 
 
 class StudentRepository:

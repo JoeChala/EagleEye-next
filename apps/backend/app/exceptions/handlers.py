@@ -23,8 +23,8 @@ def _validation_exception_handler(_: Request, exc: Exception) -> JSONResponse:
     error = cast(RequestValidationError, exc)
     return error_response(
         message="Validation failed",
-        errors=error.body,
-        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        errors=error.errors(),
+        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
     )
 
 

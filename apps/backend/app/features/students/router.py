@@ -1,11 +1,11 @@
 from uuid import UUID
 
-from apps.backend.app.features.students.model import Student
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db
-from app.features.students.schemas import (
+from app.features.students.model import Student
+from app.features.students.schema import (
     StudentCreate,
     StudentListResponse,
     StudentResponse,

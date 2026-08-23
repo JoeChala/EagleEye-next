@@ -1,8 +1,8 @@
 import uuid
 
 import pytest
-from apps.backend.app.features.students.model import Student
 
+from app.features.students.model import Student
 from app.features.students.repository import StudentRepository
 
 
