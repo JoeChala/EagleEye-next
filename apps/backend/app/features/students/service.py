@@ -2,7 +2,7 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.exceptions.student import StudentAlreadyExistsError, StudentNotFoundError
+from app.exceptions.errors import StudentAlreadyExistsError, StudentNotFoundError
 from app.features.students.model import Student
 from app.features.students.repository import StudentRepository
 

@@ -5,7 +5,11 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from app.core.logging import logger
-from app.exceptions.student import StudentAlreadyExistsError, StudentNotFoundError
+from app.exceptions.errors import (
+    AttendanceAlreadyExistsError,
+    StudentAlreadyExistsError,
+    StudentNotFoundError,
+)
 from app.utils.responses import error_response
 
 
@@ -57,6 +61,18 @@ def _student_not_found(request: Request, exc: Exception) -> JSONResponse:
     )
 
 
+def _attendance_already_exists_handler(
+    _: Request,
+    exc: Exception,
+) -> JSONResponse:
+    error = cast(AttendanceAlreadyExistsError, exc)
+
+    return error_response(
+        message=str(error),
+        status_code=status.HTTP_409_CONFLICT,
+    )
+
+
 def register_exception_handlers(app: FastAPI) -> None:
     app.add_exception_handler(HTTPException, _http_exception_handler)
     app.add_exception_handler(RequestValidationError, _validation_exception_handler)
@@ -65,3 +81,7 @@ def register_exception_handlers(app: FastAPI) -> None:
         StudentAlreadyExistsError, _student_already_exists_handler
     )
     app.add_exception_handler(StudentNotFoundError, _student_not_found)
+    app.add_exception_handler(
+        AttendanceAlreadyExistsError,
+        _attendance_already_exists_handler,
+    )

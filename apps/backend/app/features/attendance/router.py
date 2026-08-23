@@ -4,16 +4,31 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db
-from app.features.attendance.model import AttendanceSession
-from app.features.attendance.repository import AttendanceSessionRepository
+from app.features.attendance.model import AttendanceRecord, AttendanceSession
+from app.features.attendance.repository import (
+    AttendanceRecordRepository,
+    AttendanceSessionRepository,
+)
 from app.features.attendance.schema import (
+    AttendanceRecordCreate,
+    AttendanceRecordResponse,
     AttendanceSessionCreate,
     AttendanceSessionResponse,
+    BulkAttendanceCreate,
+    BulkAttendanceResponse,
 )
-from app.features.attendance.service import AttendanceSessionService
+from app.features.attendance.service import (
+    AttendanceRecordService,
+    AttendanceSessionService,
+)
+from app.features.students.repository import StudentRepository
 
 router = APIRouter(
     prefix="/attendance/sessions",
+    tags=["Attendance"],
+)
+record_router = APIRouter(
+    prefix="/attendance/records",
     tags=["Attendance"],
 )
 
@@ -23,6 +38,20 @@ def get_attendance_service(
 ) -> AttendanceSessionService:
     repository = AttendanceSessionRepository(db)
     return AttendanceSessionService(repository)
+
+
+def get_attendance_record_service(
+    db: AsyncSession = Depends(get_db),
+) -> AttendanceRecordService:
+    record_repository = AttendanceRecordRepository(db)
+    session_repository = AttendanceSessionRepository(db)
+    student_repository = StudentRepository(db)
+
+    return AttendanceRecordService(
+        record_repository,
+        session_repository,
+        student_repository,
+    )
 
 
 @router.post(
@@ -56,3 +85,69 @@ async def get_attendance_session(
         )
 
     return session
+
+
+@record_router.post(
+    "",
+    response_model=AttendanceRecordResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_attendance_record(
+    data: AttendanceRecordCreate,
+    service: AttendanceRecordService = Depends(get_attendance_record_service),
+):
+    record = AttendanceRecord(**data.model_dump())
+
+    return await service.create_record(record)
+
+
+@record_router.get(
+    "/{record_id}",
+    response_model=AttendanceRecordResponse,
+)
+async def get_attendance_record(
+    record_id: UUID,
+    service: AttendanceRecordService = Depends(get_attendance_record_service),
+):
+    record = await service.get_record(record_id)
+
+    if record is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Attendance record with id '{record_id}' was not found",
+        )
+
+    return record
+
+
+@record_router.post(
+    "/sessions/{session_id}/records",
+    response_model=BulkAttendanceResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_bulk_attendance(
+    session_id: UUID,
+    data: BulkAttendanceCreate,
+    service: AttendanceRecordService = Depends(get_attendance_record_service),
+):
+    records = [
+        AttendanceRecord(
+            session_id=session_id,
+            student_id=record.student_id,
+            status=record.status,
+        )
+        for record in data.records
+    ]
+
+    created_records = await service.create_bulk_records(
+        session_id,
+        records,
+    )
+
+    return BulkAttendanceResponse(
+        session_id=session_id,
+        records=[
+            AttendanceRecordResponse.model_validate(record)
+            for record in created_records
+        ],
+    )

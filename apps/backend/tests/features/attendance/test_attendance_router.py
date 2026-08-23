@@ -66,3 +66,191 @@ async def test_get_attendance_session_not_found(client: AsyncClient):
         "message": f"Attendance session with id '{session_id}' was not found",
         "errors": [],
     }
+
+
+@pytest.mark.asyncio
+async def test_create_attendance_record(client: AsyncClient):
+    # Create attendance session
+    session_response = await client.post(
+        "/api/v1/attendance/sessions",
+        json={
+            "subject": "DBMS",
+            "session_date": "2026-08-24",
+            "start_time": "10:00:00",
+            "end_time": "11:00:00",
+            "department": "CSE",
+            "semester": 5,
+            "section": "A",
+        },
+    )
+
+    assert session_response.status_code == 201
+
+    session_id = session_response.json()["id"]
+
+    # Create student
+    student_response = await client.post(
+        "/api/v1/students",
+        json={
+            "roll_number": "ATT001",
+            "name": "Attendance Student",
+            "email": "attendance@example.com",
+            "department": "CSE",
+            "semester": 5,
+            "section": "A",
+        },
+    )
+
+    assert student_response.status_code == 201
+
+    student_id = student_response.json()["id"]
+
+    # Create attendance
+    response = await client.post(
+        "/api/v1/attendance/records",
+        json={
+            "session_id": session_id,
+            "student_id": student_id,
+            "status": "present",
+        },
+    )
+
+    assert response.status_code == 201
+
+    data = response.json()
+
+    assert data["session_id"] == session_id
+    assert data["student_id"] == student_id
+    assert data["status"] == "present"
+
+
+@pytest.mark.asyncio
+async def test_get_attendance_record(client: AsyncClient):
+    session_response = await client.post(
+        "/api/v1/attendance/sessions",
+        json={
+            "subject": "OS",
+            "session_date": "2026-08-25",
+            "start_time": "11:00:00",
+            "end_time": "12:00:00",
+            "department": "CSE",
+            "semester": 5,
+            "section": "A",
+        },
+    )
+
+    session_id = session_response.json()["id"]
+
+    student_response = await client.post(
+        "/api/v1/students",
+        json={
+            "roll_number": "ATT002",
+            "name": "Get Attendance Student",
+            "email": "getattendance@example.com",
+            "department": "CSE",
+            "semester": 5,
+            "section": "A",
+        },
+    )
+
+    student_id = student_response.json()["id"]
+
+    create_response = await client.post(
+        "/api/v1/attendance/records",
+        json={
+            "session_id": session_id,
+            "student_id": student_id,
+            "status": "absent",
+        },
+    )
+
+    assert create_response.status_code == 201
+
+    record_id = create_response.json()["id"]
+
+    response = await client.get(f"/api/v1/attendance/records/{record_id}")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["id"] == record_id
+    assert data["status"] == "absent"
+
+
+@pytest.mark.asyncio
+async def test_get_attendance_record_not_found(
+    client: AsyncClient,
+):
+    record_id = uuid4()
+
+    response = await client.get(f"/api/v1/attendance/records/{record_id}")
+
+    assert response.status_code == 404
+
+    assert response.json() == {
+        "success": False,
+        "message": (f"Attendance record with id '{record_id}' was not found"),
+        "errors": [],
+    }
+
+
+@pytest.mark.asyncio
+async def test_create_duplicate_attendance_record(
+    client: AsyncClient,
+):
+    # Create session
+    session_response = await client.post(
+        "/api/v1/attendance/sessions",
+        json={
+            "subject": "CN",
+            "session_date": "2026-08-26",
+            "start_time": "09:00:00",
+            "end_time": "10:00:00",
+            "department": "CSE",
+            "semester": 5,
+            "section": "A",
+        },
+    )
+
+    session_id = session_response.json()["id"]
+
+    # Create student
+    student_response = await client.post(
+        "/api/v1/students",
+        json={
+            "roll_number": "ATT003",
+            "name": "Duplicate Attendance Student",
+            "email": "duplicate@example.com",
+            "department": "CSE",
+            "semester": 5,
+            "section": "A",
+        },
+    )
+
+    student_id = student_response.json()["id"]
+
+    payload = {
+        "session_id": session_id,
+        "student_id": student_id,
+        "status": "present",
+    }
+
+    first_response = await client.post(
+        "/api/v1/attendance/records",
+        json=payload,
+    )
+
+    assert first_response.status_code == 201
+
+    second_response = await client.post(
+        "/api/v1/attendance/records",
+        json=payload,
+    )
+
+    assert second_response.status_code == 409
+
+    data = second_response.json()
+
+    assert data["success"] is False
+    assert data["errors"] == []
