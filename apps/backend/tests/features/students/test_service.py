@@ -1,10 +1,10 @@
 from uuid import uuid4
 
 import pytest
+from apps.backend.app.features.students.model import Student
 
 from app.exceptions.student import StudentAlreadyExistsError, StudentNotFoundError
 from app.features.students.service import StudentService
-from app.models.student import Student
 
 
 @pytest.mark.asyncio

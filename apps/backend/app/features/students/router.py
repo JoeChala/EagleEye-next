@@ -1,5 +1,6 @@
 from uuid import UUID
 
+from apps.backend.app.features.students.model import Student
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -11,7 +12,6 @@ from app.features.students.schemas import (
     StudentUpdate,
 )
 from app.features.students.service import StudentService
-from app.models.student import Student
 
 router = APIRouter(
     prefix="/students",

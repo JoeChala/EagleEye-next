@@ -1,8 +1,7 @@
 import pytest
+from apps.backend.app.features.students.model import Student
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
-
-from app.models.student import Student
 
 
 @pytest.mark.asyncio

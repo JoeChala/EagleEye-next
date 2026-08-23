@@ -1,9 +1,9 @@
 import uuid
 
 import pytest
+from apps.backend.app.features.students.model import Student
 
 from app.features.students.repository import StudentRepository
-from app.models.student import Student
 
 
 @pytest.mark.asyncio
