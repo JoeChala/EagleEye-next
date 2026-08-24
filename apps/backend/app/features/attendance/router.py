@@ -21,6 +21,7 @@ from app.features.attendance.service import (
     AttendanceRecordService,
     AttendanceSessionService,
 )
+from app.features.courses.repository import CourseRepository
 from app.features.students.repository import StudentRepository
 
 router = APIRouter(
@@ -37,7 +38,8 @@ def get_attendance_service(
     db: AsyncSession = Depends(get_db),
 ) -> AttendanceSessionService:
     repository = AttendanceSessionRepository(db)
-    return AttendanceSessionService(repository)
+    course_repository = CourseRepository(db)
+    return AttendanceSessionService(repository, course_repository)
 
 
 def get_attendance_record_service(

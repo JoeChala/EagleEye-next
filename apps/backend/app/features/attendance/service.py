@@ -3,6 +3,7 @@ from uuid import UUID
 from app.exceptions.errors import (
     AttendanceAlreadyExistsError,
     AttendanceSessionNotFoundError,
+    CourseNotFoundError,
     StudentNotFoundError,
 )
 from app.features.attendance.model import AttendanceRecord, AttendanceSession
@@ -10,17 +11,28 @@ from app.features.attendance.repository import (
     AttendanceRecordRepository,
     AttendanceSessionRepository,
 )
+from app.features.courses.repository import CourseRepository
 from app.features.students.repository import StudentRepository
 
 
 class AttendanceSessionService:
-    def __init__(self, repository: AttendanceSessionRepository):
+    def __init__(
+        self,
+        repository: AttendanceSessionRepository,
+        course_repository: CourseRepository,
+    ):
         self.repository = repository
+        self.course_repository = course_repository
 
     async def create_session(
         self,
         attendance_session: AttendanceSession,
     ) -> AttendanceSession:
+        course = await self.course_repository.get_by_id(attendance_session.course_id)
+
+        if course is None:
+            raise CourseNotFoundError(attendance_session.course_id)
+
         return await self.repository.create(attendance_session)
 
     async def get_session(

@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import (
 )
 
 from app.db.session import get_db
+from app.features.courses.model import Course
 from app.main import app
 
 load_dotenv()
@@ -70,7 +71,27 @@ async def clean_database():
     )
 
     async with engine.begin() as connection:
+        await connection.execute(text("DELETE FROM attendance_records"))
+        await connection.execute(text("DELETE FROM attendance_sessions"))
         await connection.execute(text("DELETE FROM students"))
         await connection.execute(text("DELETE FROM faculty"))
+        await connection.execute(text("DELETE FROM courses"))
 
     await engine.dispose()
+
+
+@pytest_asyncio.fixture
+async def course(db_session: AsyncSession):
+    course = Course(
+        code="CS501",
+        name="Database Management Systems",
+        department="CSE",
+        semester=5,
+        credits=4,
+    )
+
+    db_session.add(course)
+    await db_session.commit()
+    await db_session.refresh(course)
+
+    return course

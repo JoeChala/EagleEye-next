@@ -20,8 +20,9 @@ class AttendanceStatus(Enum):
 class AttendanceSession(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "attendance_sessions"
 
-    subject: Mapped[str] = mapped_column(
-        String(100),
+    course_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True),
+        ForeignKey("courses.id"),
         nullable=False,
     )
 

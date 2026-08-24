@@ -17,11 +17,11 @@ from app.features.attendance.repository import (
 
 
 @pytest.mark.asyncio
-async def test_create_attendance_session(db_session):
+async def test_create_attendance_session(db_session, course):
     repository = AttendanceSessionRepository(db_session)
 
     attendance_session = AttendanceSession(
-        subject="Database Management Systems",
+        course_id=course.id,
         session_date=DateType(2026, 8, 24),
         start_time=TimeType(10, 0),
         end_time=TimeType(11, 0),
@@ -33,15 +33,15 @@ async def test_create_attendance_session(db_session):
     result = await repository.create(attendance_session)
 
     assert result.id is not None
-    assert result.subject == "Database Management Systems"
+    assert result.course_id == course.id
 
 
 @pytest.mark.asyncio
-async def test_get_attendance_session_by_id(db_session):
+async def test_get_attendance_session_by_id(db_session, course):
     repository = AttendanceSessionRepository(db_session)
 
     attendance_session = AttendanceSession(
-        subject="Operating Systems",
+        course_id=course.id,
         session_date=DateType(2026, 8, 24),
         start_time=TimeType(11, 0),
         end_time=TimeType(12, 0),
@@ -67,9 +67,9 @@ async def test_get_attendance_session_not_found(db_session):
     assert result is None
 
 
-async def create_session(db_session):
+async def create_session(db_session, course):
     session = AttendanceSession(
-        subject="DBMS",
+        course_id=course.id,
         session_date=DateType(2026, 8, 24),
         start_time=TimeType(10, 0),
         end_time=TimeType(11, 0),
@@ -105,10 +105,10 @@ async def create_student(db_session):
 
 
 @pytest.mark.asyncio
-async def test_create_attendance_record(db_session):
+async def test_create_attendance_record(db_session, course):
     repository = AttendanceRecordRepository(db_session)
 
-    session = await create_session(db_session)
+    session = await create_session(db_session, course)
     student = await create_student(db_session)
 
     record = AttendanceRecord(
@@ -126,10 +126,10 @@ async def test_create_attendance_record(db_session):
 
 
 @pytest.mark.asyncio
-async def test_get_attendance_record_by_id(db_session):
+async def test_get_attendance_record_by_id(db_session, course):
     repository = AttendanceRecordRepository(db_session)
 
-    session = await create_session(db_session)
+    session = await create_session(db_session, course)
     student = await create_student(db_session)
 
     record = AttendanceRecord(
@@ -158,10 +158,10 @@ async def test_get_attendance_record_not_found(db_session):
 
 
 @pytest.mark.asyncio
-async def test_get_by_session_and_student(db_session):
+async def test_get_by_session_and_student(db_session, course):
     repository = AttendanceRecordRepository(db_session)
 
-    session = await create_session(db_session)
+    session = await create_session(db_session, course)
     student = await create_student(db_session)
 
     record = AttendanceRecord(
@@ -195,10 +195,10 @@ async def test_get_by_session_and_student_not_found(db_session):
 
 
 @pytest.mark.asyncio
-async def test_duplicate_attendance_record_is_rejected(db_session):
+async def test_duplicate_attendance_record_is_rejected(db_session, course):
     repository = AttendanceRecordRepository(db_session)
 
-    session = await create_session(db_session)
+    session = await create_session(db_session, course)
     student = await create_student(db_session)
 
     first_record = AttendanceRecord(

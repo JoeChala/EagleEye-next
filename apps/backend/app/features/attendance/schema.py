@@ -7,7 +7,7 @@ from app.features.attendance.model import AttendanceStatus
 
 
 class AttendanceSessionCreate(BaseModel):
-    subject: str
+    course_id: UUID
     session_date: date
     start_time: time
     end_time: time
@@ -20,7 +20,7 @@ class AttendanceSessionResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: UUID
-    subject: str
+    course_id: UUID
     session_date: date
     start_time: time
     end_time: time

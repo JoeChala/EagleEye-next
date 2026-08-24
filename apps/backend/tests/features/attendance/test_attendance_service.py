@@ -6,6 +6,7 @@ import pytest
 from app.exceptions.errors import (
     AttendanceAlreadyExistsError,
     AttendanceSessionNotFoundError,
+    CourseNotFoundError,
     StudentNotFoundError,
 )
 from app.features.attendance.model import (
@@ -21,14 +22,16 @@ from app.features.attendance.service import (
     AttendanceRecordService,
     AttendanceSessionService,
 )
+from app.features.courses.repository import CourseRepository
 from app.features.students.repository import StudentRepository
 
 
-async def create_session(db_session):
+async def create_session(db_session, course):
     repository = AttendanceSessionRepository(db_session)
+    course_repository = CourseRepository(db_session)
 
     session = AttendanceSession(
-        subject="DBMS",
+        course_id=course.id,
         session_date=date(2026, 8, 24),
         start_time=time(10, 0),
         end_time=time(11, 0),
@@ -37,7 +40,9 @@ async def create_session(db_session):
         section="A",
     )
 
-    return await repository.create(session)
+    service = AttendanceSessionService(repository, course_repository)
+
+    return await service.create_session(session)
 
 
 async def create_student(db_session):
@@ -60,12 +65,13 @@ async def create_student(db_session):
 
 
 @pytest.mark.asyncio
-async def test_create_attendance_session(db_session):
+async def test_create_attendance_session(db_session, course):
     repository = AttendanceSessionRepository(db_session)
-    service = AttendanceSessionService(repository)
+    course_repository = CourseRepository(db_session)
+    service = AttendanceSessionService(repository, course_repository)
 
     session = AttendanceSession(
-        subject="DBMS",
+        course_id=course.id,
         session_date=date(2026, 8, 24),
         start_time=time(10, 0),
         end_time=time(11, 0),
@@ -77,16 +83,37 @@ async def test_create_attendance_session(db_session):
     result = await service.create_session(session)
 
     assert result.id is not None
-    assert result.subject == "DBMS"
+    assert result.course_id == course.id
 
 
 @pytest.mark.asyncio
-async def test_get_attendance_session(db_session):
+async def test_create_attendance_session_course_not_found(db_session):
     repository = AttendanceSessionRepository(db_session)
-    service = AttendanceSessionService(repository)
+    course_repository = CourseRepository(db_session)
+    service = AttendanceSessionService(repository, course_repository)
 
     session = AttendanceSession(
-        subject="OS",
+        course_id=uuid4(),
+        session_date=date(2026, 8, 24),
+        start_time=time(10, 0),
+        end_time=time(11, 0),
+        department="CSE",
+        semester=5,
+        section="A",
+    )
+
+    with pytest.raises(CourseNotFoundError):
+        await service.create_session(session)
+
+
+@pytest.mark.asyncio
+async def test_get_attendance_session(db_session, course):
+    repository = AttendanceSessionRepository(db_session)
+    course_repository = CourseRepository(db_session)
+    service = AttendanceSessionService(repository, course_repository)
+
+    session = AttendanceSession(
+        course_id=course.id,
         session_date=date(2026, 8, 24),
         start_time=time(11, 0),
         end_time=time(12, 0),
@@ -106,7 +133,8 @@ async def test_get_attendance_session(db_session):
 @pytest.mark.asyncio
 async def test_get_attendance_session_not_found(db_session):
     repository = AttendanceSessionRepository(db_session)
-    service = AttendanceSessionService(repository)
+    course_repository = CourseRepository(db_session)
+    service = AttendanceSessionService(repository, course_repository)
 
     result = await service.get_session(uuid4())
 
@@ -114,7 +142,7 @@ async def test_get_attendance_session_not_found(db_session):
 
 
 @pytest.mark.asyncio
-async def test_create_attendance_record(db_session):
+async def test_create_attendance_record(db_session, course):
     record_repository = AttendanceRecordRepository(db_session)
     session_repository = AttendanceSessionRepository(db_session)
     student_repository = StudentRepository(db_session)
@@ -122,7 +150,7 @@ async def test_create_attendance_record(db_session):
         record_repository, session_repository, student_repository
     )
 
-    session = await create_session(db_session)
+    session = await create_session(db_session, course)
     student = await create_student(db_session)
 
     record = AttendanceRecord(
@@ -140,7 +168,7 @@ async def test_create_attendance_record(db_session):
 
 
 @pytest.mark.asyncio
-async def test_get_attendance_record(db_session):
+async def test_get_attendance_record(db_session, course):
     record_repository = AttendanceRecordRepository(db_session)
     session_repository = AttendanceSessionRepository(db_session)
     student_repository = StudentRepository(db_session)
@@ -148,7 +176,7 @@ async def test_get_attendance_record(db_session):
         record_repository, session_repository, student_repository
     )
 
-    session = await create_session(db_session)
+    session = await create_session(db_session, course)
     student = await create_student(db_session)
 
     record = AttendanceRecord(
@@ -181,7 +209,7 @@ async def test_get_attendance_record_not_found(db_session):
 
 
 @pytest.mark.asyncio
-async def test_create_duplicate_attendance_record(db_session):
+async def test_create_duplicate_attendance_record(db_session, course):
     record_repository = AttendanceRecordRepository(db_session)
     session_repository = AttendanceSessionRepository(db_session)
     student_repository = StudentRepository(db_session)
@@ -189,7 +217,7 @@ async def test_create_duplicate_attendance_record(db_session):
         record_repository, session_repository, student_repository
     )
 
-    session = await create_session(db_session)
+    session = await create_session(db_session, course)
     student = await create_student(db_session)
 
     first_record = AttendanceRecord(
@@ -211,8 +239,8 @@ async def test_create_duplicate_attendance_record(db_session):
 
 
 @pytest.mark.asyncio
-async def test_create_bulk_attendance(db_session):
-    session = await create_session(db_session)
+async def test_create_bulk_attendance(db_session, course):
+    session = await create_session(db_session, course)
 
     student_one = await create_student(db_session)
     student_two = await create_student(db_session)
@@ -252,8 +280,9 @@ async def test_create_bulk_attendance(db_session):
 @pytest.mark.asyncio
 async def test_create_bulk_attendance_duplicate_student(
     db_session,
+    course,
 ):
-    session = await create_session(db_session)
+    session = await create_session(db_session, course)
     student = await create_student(db_session)
 
     record_repository = AttendanceRecordRepository(db_session)
@@ -313,8 +342,9 @@ async def test_create_bulk_attendance_session_not_found(
 @pytest.mark.asyncio
 async def test_create_bulk_attendance_student_not_found(
     db_session,
+    course,
 ):
-    session = await create_session(db_session)
+    session = await create_session(db_session, course)
 
     record_repository = AttendanceRecordRepository(db_session)
     session_repository = AttendanceSessionRepository(db_session)
@@ -344,8 +374,9 @@ async def test_create_bulk_attendance_student_not_found(
 @pytest.mark.asyncio
 async def test_create_bulk_attendance_student_wrong_class(
     db_session,
+    course,
 ):
-    session = await create_session(db_session)
+    session = await create_session(db_session, course)
 
     student = await create_student(db_session)
 

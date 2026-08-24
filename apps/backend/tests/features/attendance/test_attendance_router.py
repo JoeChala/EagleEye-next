@@ -5,11 +5,11 @@ from httpx import AsyncClient
 
 
 @pytest.mark.asyncio
-async def test_create_attendance_session(client: AsyncClient):
+async def test_create_attendance_session(client: AsyncClient, course):
     response = await client.post(
         "/api/v1/attendance/sessions",
         json={
-            "subject": "DBMS",
+            "course_id": str(course.id),
             "session_date": "2026-08-24",
             "start_time": "10:00:00",
             "end_time": "11:00:00",
@@ -22,7 +22,7 @@ async def test_create_attendance_session(client: AsyncClient):
 
     data = response.json()
 
-    assert data["subject"] == "DBMS"
+    assert data["course_id"] == str(course.id)
     assert data["session_date"] == "2026-08-24"
     assert data["department"] == "CSE"
     assert data["semester"] == 5
@@ -30,11 +30,11 @@ async def test_create_attendance_session(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_get_attendance_session(client: AsyncClient):
+async def test_get_attendance_session(client: AsyncClient, course):
     create_response = await client.post(
         "/api/v1/attendance/sessions",
         json={
-            "subject": "OS",
+            "course_id": str(course.id),
             "session_date": "2026-08-24",
             "start_time": "11:00:00",
             "end_time": "12:00:00",
@@ -69,12 +69,12 @@ async def test_get_attendance_session_not_found(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_create_attendance_record(client: AsyncClient):
+async def test_create_attendance_record(client: AsyncClient, course):
     # Create attendance session
     session_response = await client.post(
         "/api/v1/attendance/sessions",
         json={
-            "subject": "DBMS",
+            "course_id": str(course.id),
             "session_date": "2026-08-24",
             "start_time": "10:00:00",
             "end_time": "11:00:00",
@@ -125,11 +125,11 @@ async def test_create_attendance_record(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_get_attendance_record(client: AsyncClient):
+async def test_get_attendance_record(client: AsyncClient, course):
     session_response = await client.post(
         "/api/v1/attendance/sessions",
         json={
-            "subject": "OS",
+            "course_id": str(course.id),
             "session_date": "2026-08-25",
             "start_time": "11:00:00",
             "end_time": "12:00:00",
@@ -198,12 +198,13 @@ async def test_get_attendance_record_not_found(
 @pytest.mark.asyncio
 async def test_create_duplicate_attendance_record(
     client: AsyncClient,
+    course,
 ):
     # Create session
     session_response = await client.post(
         "/api/v1/attendance/sessions",
         json={
-            "subject": "CN",
+            "course_id": str(course.id),
             "session_date": "2026-08-26",
             "start_time": "09:00:00",
             "end_time": "10:00:00",
@@ -254,3 +255,26 @@ async def test_create_duplicate_attendance_record(
 
     assert data["success"] is False
     assert data["errors"] == []
+
+
+@pytest.mark.asyncio
+async def test_create_attendance_session_invalid_course(client: AsyncClient):
+    missing_course_id = uuid4()
+
+    response = await client.post(
+        "/api/v1/attendance/sessions",
+        json={
+            "course_id": str(missing_course_id),
+            "session_date": "2026-08-24",
+            "start_time": "10:00:00",
+            "end_time": "11:00:00",
+            "department": "CSE",
+            "semester": 5,
+            "section": "A",
+        },
+    )
+
+    assert response.status_code == 404
+    assert response.json() == {
+        "detail": f"Course with id '{missing_course_id}' was not found"
+    }

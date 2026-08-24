@@ -7,6 +7,8 @@ from fastapi.responses import JSONResponse
 from app.core.logging import logger
 from app.exceptions.errors import (
     AttendanceAlreadyExistsError,
+    CourseAlreadyExistsError,
+    CourseNotFoundError,
     FacultyAlreadyExistsError,
     FacultyNotFoundError,
     StudentAlreadyExistsError,
@@ -83,6 +85,26 @@ def _faculty_not_found_handler(_: Request, exc: Exception) -> JSONResponse:
     )
 
 
+def _course_already_exists_handler(_: Request, exc: Exception) -> JSONResponse:
+    error = cast(CourseAlreadyExistsError, exc)
+    return JSONResponse(
+        status_code=409,
+        content={
+            "detail": str(error),
+        },
+    )
+
+
+def _course_not_found_handler(_: Request, exc: Exception) -> JSONResponse:
+    error = cast(CourseNotFoundError, exc)
+    return JSONResponse(
+        status_code=404,
+        content={
+            "detail": str(error),
+        },
+    )
+
+
 def _attendance_already_exists_handler(
     _: Request,
     exc: Exception,
@@ -108,6 +130,8 @@ def register_exception_handlers(app: FastAPI) -> None:
         _faculty_already_exists_handler,
     )
     app.add_exception_handler(FacultyNotFoundError, _faculty_not_found_handler)
+    app.add_exception_handler(CourseAlreadyExistsError, _course_already_exists_handler)
+    app.add_exception_handler(CourseNotFoundError, _course_not_found_handler)
     app.add_exception_handler(
         AttendanceAlreadyExistsError,
         _attendance_already_exists_handler,

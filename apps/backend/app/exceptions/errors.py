@@ -21,6 +21,16 @@ class FacultyNotFoundError(Exception):
         super().__init__(f"Faculty with id '{faculty_id}' was not found")
 
 
+class CourseAlreadyExistsError(Exception):
+    def __init__(self, code: str):
+        super().__init__(f"Course with code '{code}' already exists")
+
+
+class CourseNotFoundError(Exception):
+    def __init__(self, course_id: UUID):
+        super().__init__(f"Course with id '{course_id}' was not found")
+
+
 class AttendanceAlreadyExistsError(Exception):
     def __init__(self, session_id, student_id):
         self.session_id = session_id
