@@ -71,5 +71,6 @@ async def clean_database():
 
     async with engine.begin() as connection:
         await connection.execute(text("DELETE FROM students"))
+        await connection.execute(text("DELETE FROM faculty"))
 
     await engine.dispose()

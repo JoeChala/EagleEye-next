@@ -12,6 +12,7 @@ from app.features.attendance.model import (  # noqa: F401
     AttendanceRecord,
     AttendanceStatus,
 )
+from app.features.faculty.model import Faculty  # noqa: F401
 from app.features.students.model import Student  # noqa: F401
 
 config = context.config

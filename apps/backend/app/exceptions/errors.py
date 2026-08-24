@@ -11,6 +11,16 @@ class StudentNotFoundError(Exception):
         super().__init__(f"Student with id '{student_id}' was not found")
 
 
+class FacultyAlreadyExistsError(Exception):
+    def __init__(self, employee_id: str):
+        super().__init__(f"Faculty with employee id '{employee_id}' already exists")
+
+
+class FacultyNotFoundError(Exception):
+    def __init__(self, faculty_id: UUID):
+        super().__init__(f"Faculty with id '{faculty_id}' was not found")
+
+
 class AttendanceAlreadyExistsError(Exception):
     def __init__(self, session_id, student_id):
         self.session_id = session_id
