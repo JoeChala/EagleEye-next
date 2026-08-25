@@ -2,8 +2,10 @@ from uuid import UUID
 
 from app.exceptions.errors import (
     AttendanceAlreadyExistsError,
+    AttendanceSessionDepartmentMismatchError,
     AttendanceSessionNotFoundError,
     CourseNotFoundError,
+    DepartmentNotFoundError,
     StudentNotFoundError,
 )
 from app.features.attendance.model import AttendanceRecord, AttendanceSession
@@ -12,6 +14,7 @@ from app.features.attendance.repository import (
     AttendanceSessionRepository,
 )
 from app.features.courses.repository import CourseRepository
+from app.features.departments.repository import DepartmentRepository
 from app.features.students.repository import StudentRepository
 
 
@@ -20,18 +23,33 @@ class AttendanceSessionService:
         self,
         repository: AttendanceSessionRepository,
         course_repository: CourseRepository,
+        department_repository: DepartmentRepository,
     ):
         self.repository = repository
         self.course_repository = course_repository
+        self.department_repository = department_repository
 
     async def create_session(
         self,
         attendance_session: AttendanceSession,
     ) -> AttendanceSession:
+        department = await self.department_repository.get_by_id(
+            attendance_session.department_id
+        )
+
+        if department is None:
+            raise DepartmentNotFoundError(attendance_session.department_id)
+
         course = await self.course_repository.get_by_id(attendance_session.course_id)
 
         if course is None:
             raise CourseNotFoundError(attendance_session.course_id)
+
+        if course.department_id != attendance_session.department_id:
+            raise AttendanceSessionDepartmentMismatchError(
+                attendance_session.course_id,
+                attendance_session.department_id,
+            )
 
         return await self.repository.create(attendance_session)
 
@@ -94,7 +112,7 @@ class AttendanceRecordService:
                 raise StudentNotFoundError(record.student_id)
 
             if (
-                student.department != session.department
+                student.department_id != session.department_id
                 or student.semester != session.semester
                 or student.section != session.section
             ):

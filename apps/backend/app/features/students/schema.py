@@ -8,7 +8,7 @@ class StudentCreate(BaseModel):
     roll_number: str = Field(min_length=1, max_length=50)
     name: str = Field(min_length=1, max_length=150)
     email: EmailStr | None = None
-    department: str = Field(min_length=1, max_length=100)
+    department_id: UUID
     semester: int = Field(ge=1, le=8)
     section: str = Field(min_length=1, max_length=20)
 
@@ -20,7 +20,7 @@ class StudentResponse(BaseModel):
     roll_number: str
     name: str
     email: EmailStr | None
-    department: str
+    department_id: UUID
     semester: int
     section: str
     is_active: bool
@@ -38,6 +38,6 @@ class StudentListResponse(BaseModel):
 class StudentUpdate(BaseModel):
     name: str | None = None
     email: EmailStr | None = None
-    department: str | None = None
+    department_id: UUID | None = None
     semester: int | None = Field(default=None, ge=1, le=8)
     section: str | None = None

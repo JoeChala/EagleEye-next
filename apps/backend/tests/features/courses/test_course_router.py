@@ -5,13 +5,13 @@ from httpx import AsyncClient
 
 
 @pytest.mark.asyncio
-async def test_create_course(client: AsyncClient):
+async def test_create_course(client: AsyncClient, department):
     response = await client.post(
         "/api/v1/courses",
         json={
             "code": "CS522",
             "name": "API Test Course",
-            "department": "CSE",
+            "department_id": str(department.id),
             "semester": 5,
             "credits": 4,
         },
@@ -27,11 +27,11 @@ async def test_create_course(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_create_course_duplicate_code(client: AsyncClient):
+async def test_create_course_duplicate_code(client: AsyncClient, department):
     course = {
         "code": "CS523",
         "name": "API Test Course",
-        "department": "CSE",
+        "department_id": str(department.id),
         "semester": 5,
         "credits": 4,
     }
@@ -47,13 +47,13 @@ async def test_create_course_duplicate_code(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_get_course(client: AsyncClient):
+async def test_get_course(client: AsyncClient, department):
     create_response = await client.post(
         "/api/v1/courses",
         json={
             "code": "CS524",
             "name": "API Get Course",
-            "department": "CSE",
+            "department_id": str(department.id),
             "semester": 5,
             "credits": 4,
         },
@@ -74,7 +74,7 @@ async def test_get_course(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_get_course_not_found(client: AsyncClient):
+async def test_get_course_not_found(client: AsyncClient, department):
     course_id = uuid.uuid4()
 
     response = await client.get(f"/api/v1/courses/{course_id}")
@@ -84,13 +84,13 @@ async def test_get_course_not_found(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_get_courses(client: AsyncClient):
+async def test_get_courses(client: AsyncClient, department):
     await client.post(
         "/api/v1/courses",
         json={
             "code": "CS525",
             "name": "Course One",
-            "department": "CSE",
+            "department_id": str(department.id),
             "semester": 5,
             "credits": 4,
         },
@@ -101,7 +101,7 @@ async def test_get_courses(client: AsyncClient):
         json={
             "code": "CS526",
             "name": "Course Two",
-            "department": "ECE",
+            "department_id": str(department.id),
             "semester": 6,
             "credits": 3,
         },
@@ -120,14 +120,14 @@ async def test_get_courses(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_get_courses_pagination(client: AsyncClient):
+async def test_get_courses_pagination(client: AsyncClient, department):
     for index in range(3):
         response = await client.post(
             "/api/v1/courses",
             json={
                 "code": f"CS52{index + 7}",
                 "name": f"Paged Course {index}",
-                "department": "CSE",
+                "department_id": str(department.id),
                 "semester": 5,
                 "credits": 4,
             },
@@ -148,13 +148,13 @@ async def test_get_courses_pagination(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_update_course(client: AsyncClient):
+async def test_update_course(client: AsyncClient, department):
     create_response = await client.post(
         "/api/v1/courses",
         json={
             "code": "CS530",
             "name": "Before Update",
-            "department": "CSE",
+            "department_id": str(department.id),
             "semester": 5,
             "credits": 4,
         },
@@ -183,7 +183,7 @@ async def test_update_course(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_update_course_not_found(client: AsyncClient):
+async def test_update_course_not_found(client: AsyncClient, department):
     course_id = uuid.uuid4()
 
     response = await client.patch(
@@ -198,13 +198,13 @@ async def test_update_course_not_found(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_deactivate_course(client: AsyncClient):
+async def test_deactivate_course(client: AsyncClient, department):
     create_response = await client.post(
         "/api/v1/courses",
         json={
             "code": "CS531",
             "name": "Deactivate Test",
-            "department": "CSE",
+            "department_id": str(department.id),
             "semester": 5,
             "credits": 4,
         },
@@ -228,13 +228,13 @@ async def test_deactivate_course(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_deactivated_course_not_in_list(client: AsyncClient):
+async def test_deactivated_course_not_in_list(client: AsyncClient, department):
     create_response = await client.post(
         "/api/v1/courses",
         json={
             "code": "CS532",
             "name": "Inactive Course",
-            "department": "CSE",
+            "department_id": str(department.id),
             "semester": 5,
             "credits": 4,
         },
@@ -260,7 +260,7 @@ async def test_deactivated_course_not_in_list(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_deactivate_course_not_found(client: AsyncClient):
+async def test_deactivate_course_not_found(client: AsyncClient, department):
     course_id = uuid.uuid4()
 
     response = await client.delete(f"/api/v1/courses/{course_id}")
@@ -272,13 +272,14 @@ async def test_deactivate_course_not_found(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_create_course_invalid_payload_returns_validation_error(
     client: AsyncClient,
+    department,
 ):
     response = await client.post(
         "/api/v1/courses",
         json={
             "code": "",
             "name": "",
-            "department": "",
+            "department_id": "",
             "semester": "invalid",
             "credits": "invalid",
         },

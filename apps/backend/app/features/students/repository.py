@@ -34,7 +34,7 @@ class StudentRepository:
         self,
         offset: int = 0,
         limit: int = 20,
-        department: str | None = None,
+        department_id: UUID | None = None,
         semester: int | None = None,
         section: str | None = None,
     ) -> list[Student]:
@@ -44,8 +44,8 @@ class StudentRepository:
             .order_by(Student.created_at.desc())
         )
 
-        if department is not None:
-            query = query.where(Student.department == department)
+        if department_id is not None:
+            query = query.where(Student.department_id == department_id)
 
         if semester is not None:
             query = query.where(Student.semester == semester)
@@ -61,7 +61,7 @@ class StudentRepository:
 
     async def count(
         self,
-        department: str | None = None,
+        department_id: UUID | None = None,
         semester: int | None = None,
         section: str | None = None,
     ) -> int:
@@ -70,8 +70,8 @@ class StudentRepository:
             select(func.count()).select_from(Student).where(Student.is_active.is_(True))
         )
 
-        if department is not None:
-            query = query.where(Student.department == department)
+        if department_id is not None:
+            query = query.where(Student.department_id == department_id)
 
         if semester is not None:
             query = query.where(Student.semester == semester)

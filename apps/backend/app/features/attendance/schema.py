@@ -8,10 +8,10 @@ from app.features.attendance.model import AttendanceStatus
 
 class AttendanceSessionCreate(BaseModel):
     course_id: UUID
+    department_id: UUID
     session_date: date
     start_time: time
     end_time: time
-    department: str
     semester: int
     section: str
 
@@ -21,10 +21,10 @@ class AttendanceSessionResponse(BaseModel):
 
     id: UUID
     course_id: UUID
+    department_id: UUID
     session_date: date
     start_time: time
     end_time: time
-    department: str
     semester: int
     section: str
 

@@ -22,6 +22,7 @@ from app.features.attendance.service import (
     AttendanceSessionService,
 )
 from app.features.courses.repository import CourseRepository
+from app.features.departments.repository import DepartmentRepository
 from app.features.students.repository import StudentRepository
 
 router = APIRouter(
@@ -39,7 +40,12 @@ def get_attendance_service(
 ) -> AttendanceSessionService:
     repository = AttendanceSessionRepository(db)
     course_repository = CourseRepository(db)
-    return AttendanceSessionService(repository, course_repository)
+    department_repository = DepartmentRepository(db)
+    return AttendanceSessionService(
+        repository,
+        course_repository,
+        department_repository,
+    )
 
 
 def get_attendance_record_service(

@@ -11,6 +11,16 @@ class StudentNotFoundError(Exception):
         super().__init__(f"Student with id '{student_id}' was not found")
 
 
+class DepartmentAlreadyExistsError(Exception):
+    def __init__(self, code: str):
+        super().__init__(f"Department with code '{code}' already exists")
+
+
+class DepartmentNotFoundError(Exception):
+    def __init__(self, department_id: UUID):
+        super().__init__(f"Department with id '{department_id}' was not found")
+
+
 class FacultyAlreadyExistsError(Exception):
     def __init__(self, employee_id: str):
         super().__init__(f"Faculty with employee id '{employee_id}' already exists")
@@ -47,3 +57,14 @@ class AttendanceSessionNotFoundError(Exception):
         self.session_id = session_id
 
         super().__init__(f"Attendance session with id '{session_id}' was not found")
+
+
+class AttendanceSessionDepartmentMismatchError(Exception):
+    def __init__(self, course_id, department_id):
+        self.course_id = course_id
+        self.department_id = department_id
+
+        super().__init__(
+            "Attendance session department must match the course department "
+            f"for course '{course_id}' and department '{department_id}'"
+        )

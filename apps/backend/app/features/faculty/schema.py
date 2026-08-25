@@ -8,13 +8,13 @@ class FacultyCreate(BaseModel):
     employee_id: str = Field(min_length=1, max_length=50)
     name: str = Field(min_length=1, max_length=150)
     email: EmailStr | None = None
-    department: str = Field(min_length=1, max_length=100)
+    department_id: UUID
 
 
 class FacultyUpdate(BaseModel):
     name: str | None = None
     email: EmailStr | None = None
-    department: str | None = None
+    department_id: UUID | None = None
 
 
 class FacultyResponse(BaseModel):
@@ -24,7 +24,7 @@ class FacultyResponse(BaseModel):
     employee_id: str
     name: str
     email: EmailStr | None
-    department: str
+    department_id: UUID
     is_active: bool
     created_at: datetime
     updated_at: datetime

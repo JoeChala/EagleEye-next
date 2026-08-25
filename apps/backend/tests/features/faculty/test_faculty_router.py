@@ -5,14 +5,14 @@ from httpx import AsyncClient
 
 
 @pytest.mark.asyncio
-async def test_create_faculty(client: AsyncClient):
+async def test_create_faculty(client: AsyncClient, department):
     response = await client.post(
         "/api/v1/faculty",
         json={
             "employee_id": "EMP019",
             "name": "API Test Faculty",
             "email": "faculty@example.com",
-            "department": "CSE",
+            "department_id": str(department.id),
         },
     )
 
@@ -26,12 +26,12 @@ async def test_create_faculty(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_create_faculty_duplicate_employee_id(client: AsyncClient):
+async def test_create_faculty_duplicate_employee_id(client: AsyncClient, department):
     faculty = {
         "employee_id": "EMP020",
         "name": "API Test Faculty",
         "email": "faculty@example.com",
-        "department": "CSE",
+        "department_id": str(department.id),
     }
 
     first_response = await client.post("/api/v1/faculty", json=faculty)
@@ -48,14 +48,14 @@ async def test_create_faculty_duplicate_employee_id(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_get_faculty(client: AsyncClient):
+async def test_get_faculty(client: AsyncClient, department):
     create_response = await client.post(
         "/api/v1/faculty",
         json={
             "employee_id": "EMP021",
             "name": "API Get Faculty",
             "email": "api-get@example.com",
-            "department": "CSE",
+            "department_id": str(department.id),
         },
     )
 
@@ -74,7 +74,7 @@ async def test_get_faculty(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_get_faculty_not_found(client: AsyncClient):
+async def test_get_faculty_not_found(client: AsyncClient, department):
     faculty_id = uuid.uuid4()
 
     response = await client.get(f"/api/v1/faculty/{faculty_id}")
@@ -86,14 +86,14 @@ async def test_get_faculty_not_found(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_get_faculty_list(client: AsyncClient):
+async def test_get_faculty_list(client: AsyncClient, department):
     await client.post(
         "/api/v1/faculty",
         json={
             "employee_id": "EMP022",
             "name": "Faculty One",
             "email": "faculty1@example.com",
-            "department": "CSE",
+            "department_id": str(department.id),
         },
     )
 
@@ -103,7 +103,7 @@ async def test_get_faculty_list(client: AsyncClient):
             "employee_id": "EMP023",
             "name": "Faculty Two",
             "email": "faculty2@example.com",
-            "department": "ECE",
+            "department_id": str(department.id),
         },
     )
 
@@ -120,7 +120,7 @@ async def test_get_faculty_list(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_get_faculty_pagination(client: AsyncClient):
+async def test_get_faculty_pagination(client: AsyncClient, department):
     for index in range(3):
         response = await client.post(
             "/api/v1/faculty",
@@ -128,7 +128,7 @@ async def test_get_faculty_pagination(client: AsyncClient):
                 "employee_id": f"EMP02{index + 4}",
                 "name": f"Paginated Faculty {index}",
                 "email": f"faculty{index}@example.com",
-                "department": "CSE",
+                "department_id": str(department.id),
             },
         )
 
@@ -147,14 +147,18 @@ async def test_get_faculty_pagination(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_update_faculty(client: AsyncClient):
+async def test_update_faculty(client: AsyncClient, department, department_factory):
+    ece_department = await department_factory(
+        code="ECE",
+        name="Electronics and Communication Engineering",
+    )
     create_response = await client.post(
         "/api/v1/faculty",
         json={
             "employee_id": "EMP027",
             "name": "Before Update",
             "email": "update-api@example.com",
-            "department": "CSE",
+            "department_id": str(department.id),
         },
     )
 
@@ -166,7 +170,7 @@ async def test_update_faculty(client: AsyncClient):
         f"/api/v1/faculty/{faculty['id']}",
         json={
             "name": "After Update",
-            "department": "ECE",
+            "department_id": str(ece_department.id),
         },
     )
 
@@ -176,12 +180,12 @@ async def test_update_faculty(client: AsyncClient):
 
     assert data["id"] == faculty["id"]
     assert data["name"] == "After Update"
-    assert data["department"] == "ECE"
+    assert data["department_id"] == str(ece_department.id)
     assert data["employee_id"] == "EMP027"
 
 
 @pytest.mark.asyncio
-async def test_update_faculty_not_found(client: AsyncClient):
+async def test_update_faculty_not_found(client: AsyncClient, department):
     faculty_id = uuid.uuid4()
 
     response = await client.patch(
@@ -198,14 +202,14 @@ async def test_update_faculty_not_found(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_deactivate_faculty(client: AsyncClient):
+async def test_deactivate_faculty(client: AsyncClient, department):
     create_response = await client.post(
         "/api/v1/faculty",
         json={
             "employee_id": "EMP028",
             "name": "Deactivate Test",
             "email": "deactivate@example.com",
-            "department": "CSE",
+            "department_id": str(department.id),
         },
     )
 
@@ -227,14 +231,14 @@ async def test_deactivate_faculty(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_deactivated_faculty_not_in_list(client: AsyncClient):
+async def test_deactivated_faculty_not_in_list(client: AsyncClient, department):
     create_response = await client.post(
         "/api/v1/faculty",
         json={
             "employee_id": "EMP029",
             "name": "Inactive Faculty",
             "email": "inactive@example.com",
-            "department": "CSE",
+            "department_id": str(department.id),
         },
     )
 
@@ -258,7 +262,7 @@ async def test_deactivated_faculty_not_in_list(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_deactivate_faculty_not_found(client: AsyncClient):
+async def test_deactivate_faculty_not_found(client: AsyncClient, department):
     faculty_id = uuid.uuid4()
 
     response = await client.delete(f"/api/v1/faculty/{faculty_id}")

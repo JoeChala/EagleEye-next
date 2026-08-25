@@ -6,12 +6,12 @@ from app.features.students.model import Student
 
 
 @pytest.mark.asyncio
-async def test_create_student(db_session):
+async def test_create_student(db_session, department):
     student = Student(
         roll_number="TEST001",
         name="Test Student",
         email="test@example.com",
-        department="CSE",
+        department_id=department.id,
         semester=5,
         section="A",
     )
@@ -30,12 +30,12 @@ async def test_create_student(db_session):
 
 
 @pytest.mark.asyncio
-async def test_student_roll_number_must_be_unique(db_session):
+async def test_student_roll_number_must_be_unique(db_session, department):
     student = Student(
         roll_number="TEST002",
         name="Test Student",
         email="test@example.com",
-        department="CSE",
+        department_id=department.id,
         semester=7,
         section="A",
     )
@@ -46,7 +46,7 @@ async def test_student_roll_number_must_be_unique(db_session):
         roll_number="TEST002",
         name="Test Student2",
         email="test2@example.com",
-        department="ISE",
+        department_id=department.id,
         semester=7,
         section="A",
     )
@@ -59,12 +59,12 @@ async def test_student_roll_number_must_be_unique(db_session):
 
 
 @pytest.mark.asyncio
-async def test_student_is_active_defaults_to_true(db_session):
+async def test_student_is_active_defaults_to_true(db_session, department):
     student = Student(
         roll_number="MODEL001",
         name="Default Active Test",
         email="model@example.com",
-        department="CSE",
+        department_id=department.id,
         semester=5,
         section="A",
     )

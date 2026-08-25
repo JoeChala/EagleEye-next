@@ -4,37 +4,28 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field
 
 
-class CourseCreate(BaseModel):
+class DepartmentCreate(BaseModel):
     code: str = Field(min_length=1, max_length=50)
     name: str = Field(min_length=1, max_length=150)
-    department_id: UUID
-    semester: int
-    credits: int
 
 
-class CourseUpdate(BaseModel):
+class DepartmentUpdate(BaseModel):
     name: str | None = None
-    department_id: UUID | None = None
-    semester: int | None = None
-    credits: int | None = None
 
 
-class CourseResponse(BaseModel):
+class DepartmentResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: UUID
     code: str
     name: str
-    department_id: UUID
-    semester: int
-    credits: int
     is_active: bool
     created_at: datetime
     updated_at: datetime
 
 
-class CourseListResponse(BaseModel):
-    items: list[CourseResponse]
+class DepartmentListResponse(BaseModel):
+    items: list[DepartmentResponse]
     total: int
     offset: int
     limit: int

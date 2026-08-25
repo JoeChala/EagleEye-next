@@ -8,14 +8,14 @@ from app.features.students.service import StudentService
 
 
 @pytest.mark.asyncio
-async def test_student_already_exists_error(db_session):
+async def test_student_already_exists_error(db_session, department):
     service = StudentService(db_session)
 
     student1 = Student(
         roll_number="TEST005",
         name="Student Error Test 1",
         email="repository@example.com",
-        department="CSE",
+        department_id=department.id,
         semester=5,
         section="A",
     )
@@ -26,7 +26,7 @@ async def test_student_already_exists_error(db_session):
         roll_number="TEST005",
         name="Student Error Test 2",
         email="repository2@example.com",
-        department="CSE",
+        department_id=department.id,
         semester=5,
         section="A",
     )
@@ -36,14 +36,14 @@ async def test_student_already_exists_error(db_session):
 
 
 @pytest.mark.asyncio
-async def test_get_student(db_session):
+async def test_get_student(db_session, department):
     service = StudentService(db_session)
 
     student = Student(
         roll_number="TEST006",
         name="Service Get Test",
         email="service-get@example.com",
-        department="CSE",
+        department_id=department.id,
         semester=5,
         section="A",
     )
@@ -57,7 +57,7 @@ async def test_get_student(db_session):
 
 
 @pytest.mark.asyncio
-async def test_student_not_found_error(db_session):
+async def test_student_not_found_error(db_session, department):
     service = StudentService(db_session)
 
     student_id = uuid4()
@@ -69,14 +69,14 @@ async def test_student_not_found_error(db_session):
 
 
 @pytest.mark.asyncio
-async def test_update_student(db_session):
+async def test_update_student(db_session, department):
     service = StudentService(db_session)
 
     student = Student(
         roll_number="TEST009",
         name="Service Update Test",
         email="service-update@example.com",
-        department="CSE",
+        department_id=department.id,
         semester=5,
         section="A",
     )
@@ -97,7 +97,7 @@ async def test_update_student(db_session):
 
 
 @pytest.mark.asyncio
-async def test_update_student_not_found(db_session):
+async def test_update_student_not_found(db_session, department):
     service = StudentService(db_session)
 
     student_id = uuid4()
@@ -110,14 +110,14 @@ async def test_update_student_not_found(db_session):
 
 
 @pytest.mark.asyncio
-async def test_deactivate_student(db_session):
+async def test_deactivate_student(db_session, department):
     service = StudentService(db_session)
 
     student = Student(
         roll_number="TEST011",
         name="Deactivate Service Test",
         email="deactivate-service@example.com",
-        department="CSE",
+        department_id=department.id,
         semester=5,
         section="A",
     )
@@ -131,7 +131,7 @@ async def test_deactivate_student(db_session):
 
 
 @pytest.mark.asyncio
-async def test_deactivate_student_not_found(db_session):
+async def test_deactivate_student_not_found(db_session, department):
     service = StudentService(db_session)
 
     student_id = uuid4()
@@ -143,15 +143,21 @@ async def test_deactivate_student_not_found(db_session):
 @pytest.mark.asyncio
 async def test_get_students_with_filters(
     db_session,
+    department,
+    department_factory,
 ):
     service = StudentService(db_session)
+    ece_department = await department_factory(
+        code="ECE",
+        name="Electronics and Communication Engineering",
+    )
 
     await service.register_student(
         Student(
             roll_number="SERVICEFILTER001",
             name="CSE Student",
             email="servicefilter1@example.com",
-            department="CSE",
+            department_id=department.id,
             semester=5,
             section="A",
         )
@@ -162,16 +168,16 @@ async def test_get_students_with_filters(
             roll_number="SERVICEFILTER002",
             name="ECE Student",
             email="servicefilter2@example.com",
-            department="ECE",
+            department_id=ece_department.id,
             semester=5,
             section="A",
         )
     )
 
     students, total = await service.get_students(
-        department="CSE",
+        department_id=department.id,
     )
 
     assert total == 1
     assert len(students) == 1
-    assert students[0].department == "CSE"
+    assert students[0].department_id == department.id

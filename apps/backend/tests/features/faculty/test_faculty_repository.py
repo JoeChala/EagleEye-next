@@ -7,12 +7,12 @@ from app.features.faculty.repository import FacultyRepository
 
 
 @pytest.mark.asyncio
-async def test_get_faculty_by_employee_id(db_session):
+async def test_get_faculty_by_employee_id(db_session, department):
     faculty = Faculty(
         employee_id="EMP004",
         name="Repository Test",
         email="repository@example.com",
-        department="CSE",
+        department_id=department.id,
     )
 
     db_session.add(faculty)
@@ -28,7 +28,7 @@ async def test_get_faculty_by_employee_id(db_session):
 
 
 @pytest.mark.asyncio
-async def test_get_faculty_by_employee_id_not_found(db_session):
+async def test_get_faculty_by_employee_id_not_found(db_session, department):
     repository = FacultyRepository(db_session)
 
     result = await repository.get_by_employee_id("DOES_NOT_EXIST")
@@ -37,13 +37,13 @@ async def test_get_faculty_by_employee_id_not_found(db_session):
 
 
 @pytest.mark.asyncio
-async def test_create_faculty(db_session):
+async def test_create_faculty(db_session, department):
     repository = FacultyRepository(db_session)
     faculty_details = Faculty(
         employee_id="EMP005",
         name="Faculty Creation Test",
         email="repository@example.com",
-        department="CSE",
+        department_id=department.id,
     )
     faculty = await repository.create(faculty_details)
 
@@ -52,13 +52,13 @@ async def test_create_faculty(db_session):
 
 
 @pytest.mark.asyncio
-async def test_get_faculty_by_id(db_session):
+async def test_get_faculty_by_id(db_session, department):
     repository = FacultyRepository(db_session)
     faculty_details = Faculty(
         employee_id="EMP006",
         name="Faculty Get Test",
         email="repository@example.com",
-        department="CSE",
+        department_id=department.id,
     )
     faculty = await repository.create(faculty_details)
 
@@ -69,7 +69,7 @@ async def test_get_faculty_by_id(db_session):
 
 
 @pytest.mark.asyncio
-async def test_get_faculty_by_random_id(db_session):
+async def test_get_faculty_by_random_id(db_session, department):
     repository = FacultyRepository(db_session)
     faculty = await repository.get_by_id(uuid.uuid4())
 
@@ -77,21 +77,21 @@ async def test_get_faculty_by_random_id(db_session):
 
 
 @pytest.mark.asyncio
-async def test_list_faculty(db_session):
+async def test_list_faculty(db_session, department):
     repository = FacultyRepository(db_session)
 
     faculty1 = Faculty(
         employee_id="EMP007",
         name="Faculty One",
         email="faculty1@example.com",
-        department="CSE",
+        department_id=department.id,
     )
 
     faculty2 = Faculty(
         employee_id="EMP008",
         name="Faculty Two",
         email="faculty2@example.com",
-        department="ECE",
+        department_id=department.id,
     )
 
     await repository.create(faculty1)
@@ -106,14 +106,14 @@ async def test_list_faculty(db_session):
 
 
 @pytest.mark.asyncio
-async def test_update_faculty(db_session):
+async def test_update_faculty(db_session, department):
     repository = FacultyRepository(db_session)
 
     faculty = Faculty(
         employee_id="EMP009",
         name="Update Test",
         email="update@example.com",
-        department="CSE",
+        department_id=department.id,
     )
 
     await repository.create(faculty)
@@ -122,19 +122,19 @@ async def test_update_faculty(db_session):
         faculty.id,
         {
             "name": "Updated Faculty",
-            "department": "ECE",
+            "department_id": str(department.id),
         },
     )
 
     assert updated_faculty is not None
     assert updated_faculty.id == faculty.id
     assert updated_faculty.name == "Updated Faculty"
-    assert updated_faculty.department == "ECE"
+    assert updated_faculty.department_id == department.id
     assert updated_faculty.employee_id == "EMP009"
 
 
 @pytest.mark.asyncio
-async def test_update_faculty_not_found(db_session):
+async def test_update_faculty_not_found(db_session, department):
     repository = FacultyRepository(db_session)
 
     faculty = await repository.update(
@@ -146,14 +146,14 @@ async def test_update_faculty_not_found(db_session):
 
 
 @pytest.mark.asyncio
-async def test_deactivate_faculty(db_session):
+async def test_deactivate_faculty(db_session, department):
     repository = FacultyRepository(db_session)
 
     faculty = Faculty(
         employee_id="EMP010",
         name="Deactivate Repository Test",
         email="deactivate-repo@example.com",
-        department="CSE",
+        department_id=department.id,
     )
 
     await repository.create(faculty)
@@ -166,7 +166,7 @@ async def test_deactivate_faculty(db_session):
 
 
 @pytest.mark.asyncio
-async def test_deactivate_faculty_not_found(db_session):
+async def test_deactivate_faculty_not_found(db_session, department):
     repository = FacultyRepository(db_session)
 
     result = await repository.deactivate(uuid.uuid4())
@@ -175,21 +175,21 @@ async def test_deactivate_faculty_not_found(db_session):
 
 
 @pytest.mark.asyncio
-async def test_list_excludes_inactive_faculty(db_session):
+async def test_list_excludes_inactive_faculty(db_session, department):
     repository = FacultyRepository(db_session)
 
     active_faculty = Faculty(
         employee_id="EMP011",
         name="Active Faculty",
         email="active@example.com",
-        department="CSE",
+        department_id=department.id,
     )
 
     inactive_faculty = Faculty(
         employee_id="EMP012",
         name="Inactive Faculty",
         email="inactive@example.com",
-        department="ECE",
+        department_id=department.id,
     )
 
     await repository.create(active_faculty)

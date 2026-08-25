@@ -5,7 +5,7 @@ from httpx import AsyncClient
 
 
 @pytest.mark.asyncio
-async def test_create_attendance_session(client: AsyncClient, course):
+async def test_create_attendance_session(client: AsyncClient, course, department):
     response = await client.post(
         "/api/v1/attendance/sessions",
         json={
@@ -13,7 +13,7 @@ async def test_create_attendance_session(client: AsyncClient, course):
             "session_date": "2026-08-24",
             "start_time": "10:00:00",
             "end_time": "11:00:00",
-            "department": "CSE",
+            "department_id": str(department.id),
             "semester": 5,
             "section": "A",
         },
@@ -24,13 +24,13 @@ async def test_create_attendance_session(client: AsyncClient, course):
 
     assert data["course_id"] == str(course.id)
     assert data["session_date"] == "2026-08-24"
-    assert data["department"] == "CSE"
+    assert data["department_id"] == str(department.id)
     assert data["semester"] == 5
     assert data["section"] == "A"
 
 
 @pytest.mark.asyncio
-async def test_get_attendance_session(client: AsyncClient, course):
+async def test_get_attendance_session(client: AsyncClient, course, department):
     create_response = await client.post(
         "/api/v1/attendance/sessions",
         json={
@@ -38,7 +38,7 @@ async def test_get_attendance_session(client: AsyncClient, course):
             "session_date": "2026-08-24",
             "start_time": "11:00:00",
             "end_time": "12:00:00",
-            "department": "CSE",
+            "department_id": str(department.id),
             "semester": 5,
             "section": "A",
         },
@@ -54,7 +54,7 @@ async def test_get_attendance_session(client: AsyncClient, course):
 
 
 @pytest.mark.asyncio
-async def test_get_attendance_session_not_found(client: AsyncClient):
+async def test_get_attendance_session_not_found(client: AsyncClient, department):
     session_id = uuid4()
 
     response = await client.get(f"/api/v1/attendance/sessions/{session_id}")
@@ -69,7 +69,7 @@ async def test_get_attendance_session_not_found(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_create_attendance_record(client: AsyncClient, course):
+async def test_create_attendance_record(client: AsyncClient, course, department):
     # Create attendance session
     session_response = await client.post(
         "/api/v1/attendance/sessions",
@@ -78,7 +78,7 @@ async def test_create_attendance_record(client: AsyncClient, course):
             "session_date": "2026-08-24",
             "start_time": "10:00:00",
             "end_time": "11:00:00",
-            "department": "CSE",
+            "department_id": str(department.id),
             "semester": 5,
             "section": "A",
         },
@@ -95,7 +95,7 @@ async def test_create_attendance_record(client: AsyncClient, course):
             "roll_number": "ATT001",
             "name": "Attendance Student",
             "email": "attendance@example.com",
-            "department": "CSE",
+            "department_id": str(department.id),
             "semester": 5,
             "section": "A",
         },
@@ -125,7 +125,7 @@ async def test_create_attendance_record(client: AsyncClient, course):
 
 
 @pytest.mark.asyncio
-async def test_get_attendance_record(client: AsyncClient, course):
+async def test_get_attendance_record(client: AsyncClient, course, department):
     session_response = await client.post(
         "/api/v1/attendance/sessions",
         json={
@@ -133,7 +133,7 @@ async def test_get_attendance_record(client: AsyncClient, course):
             "session_date": "2026-08-25",
             "start_time": "11:00:00",
             "end_time": "12:00:00",
-            "department": "CSE",
+            "department_id": str(department.id),
             "semester": 5,
             "section": "A",
         },
@@ -147,7 +147,7 @@ async def test_get_attendance_record(client: AsyncClient, course):
             "roll_number": "ATT002",
             "name": "Get Attendance Student",
             "email": "getattendance@example.com",
-            "department": "CSE",
+            "department_id": str(department.id),
             "semester": 5,
             "section": "A",
         },
@@ -181,6 +181,7 @@ async def test_get_attendance_record(client: AsyncClient, course):
 @pytest.mark.asyncio
 async def test_get_attendance_record_not_found(
     client: AsyncClient,
+    department,
 ):
     record_id = uuid4()
 
@@ -199,6 +200,7 @@ async def test_get_attendance_record_not_found(
 async def test_create_duplicate_attendance_record(
     client: AsyncClient,
     course,
+    department,
 ):
     # Create session
     session_response = await client.post(
@@ -208,7 +210,7 @@ async def test_create_duplicate_attendance_record(
             "session_date": "2026-08-26",
             "start_time": "09:00:00",
             "end_time": "10:00:00",
-            "department": "CSE",
+            "department_id": str(department.id),
             "semester": 5,
             "section": "A",
         },
@@ -223,7 +225,7 @@ async def test_create_duplicate_attendance_record(
             "roll_number": "ATT003",
             "name": "Duplicate Attendance Student",
             "email": "duplicate@example.com",
-            "department": "CSE",
+            "department_id": str(department.id),
             "semester": 5,
             "section": "A",
         },
@@ -258,7 +260,9 @@ async def test_create_duplicate_attendance_record(
 
 
 @pytest.mark.asyncio
-async def test_create_attendance_session_invalid_course(client: AsyncClient):
+async def test_create_attendance_session_invalid_course(
+    client: AsyncClient, department
+):
     missing_course_id = uuid4()
 
     response = await client.post(
@@ -268,7 +272,7 @@ async def test_create_attendance_session_invalid_course(client: AsyncClient):
             "session_date": "2026-08-24",
             "start_time": "10:00:00",
             "end_time": "11:00:00",
-            "department": "CSE",
+            "department_id": str(department.id),
             "semester": 5,
             "section": "A",
         },

@@ -3,19 +3,20 @@ from uuid import uuid4
 import pytest
 
 from app.exceptions.errors import FacultyAlreadyExistsError, FacultyNotFoundError
+from app.features.departments.model import Department
 from app.features.faculty.model import Faculty
 from app.features.faculty.service import FacultyService
 
 
 @pytest.mark.asyncio
-async def test_faculty_already_exists_error(db_session):
+async def test_faculty_already_exists_error(db_session, department):
     service = FacultyService(db_session)
 
     faculty1 = Faculty(
         employee_id="EMP013",
         name="Faculty Error Test 1",
         email="repository@example.com",
-        department="CSE",
+        department_id=department.id,
     )
 
     await service.create_faculty(faculty1)
@@ -24,7 +25,7 @@ async def test_faculty_already_exists_error(db_session):
         employee_id="EMP013",
         name="Faculty Error Test 2",
         email="repository2@example.com",
-        department="ECE",
+        department_id=department.id,
     )
 
     with pytest.raises(FacultyAlreadyExistsError):
@@ -32,14 +33,14 @@ async def test_faculty_already_exists_error(db_session):
 
 
 @pytest.mark.asyncio
-async def test_get_faculty(db_session):
+async def test_get_faculty(db_session, department):
     service = FacultyService(db_session)
 
     faculty = Faculty(
         employee_id="EMP014",
         name="Service Get Test",
         email="service-get@example.com",
-        department="CSE",
+        department_id=department.id,
     )
 
     await service.create_faculty(faculty)
@@ -51,7 +52,7 @@ async def test_get_faculty(db_session):
 
 
 @pytest.mark.asyncio
-async def test_faculty_not_found_error(db_session):
+async def test_faculty_not_found_error(db_session, department):
     service = FacultyService(db_session)
 
     faculty_id = uuid4()
@@ -63,14 +64,14 @@ async def test_faculty_not_found_error(db_session):
 
 
 @pytest.mark.asyncio
-async def test_update_faculty(db_session):
+async def test_update_faculty(db_session, department):
     service = FacultyService(db_session)
 
     faculty = Faculty(
         employee_id="EMP015",
         name="Service Update Test",
         email="service-update@example.com",
-        department="CSE",
+        department_id=department.id,
     )
 
     await service.create_faculty(faculty)
@@ -79,17 +80,17 @@ async def test_update_faculty(db_session):
         faculty.id,
         {
             "name": "Updated Service Faculty",
-            "department": "ECE",
+            "department_id": str(department.id),
         },
     )
 
     assert updated_faculty.name == "Updated Service Faculty"
-    assert updated_faculty.department == "ECE"
+    assert updated_faculty.department_id == department.id
     assert updated_faculty.employee_id == "EMP015"
 
 
 @pytest.mark.asyncio
-async def test_update_faculty_not_found(db_session):
+async def test_update_faculty_not_found(db_session, department):
     service = FacultyService(db_session)
 
     faculty_id = uuid4()
@@ -102,14 +103,14 @@ async def test_update_faculty_not_found(db_session):
 
 
 @pytest.mark.asyncio
-async def test_deactivate_faculty(db_session):
+async def test_deactivate_faculty(db_session, department):
     service = FacultyService(db_session)
 
     faculty = Faculty(
         employee_id="EMP016",
         name="Deactivate Service Test",
         email="deactivate-service@example.com",
-        department="CSE",
+        department_id=department.id,
     )
 
     await service.create_faculty(faculty)
@@ -121,7 +122,7 @@ async def test_deactivate_faculty(db_session):
 
 
 @pytest.mark.asyncio
-async def test_deactivate_faculty_not_found(db_session):
+async def test_deactivate_faculty_not_found(db_session, department):
     service = FacultyService(db_session)
 
     faculty_id = uuid4()
@@ -131,15 +132,22 @@ async def test_deactivate_faculty_not_found(db_session):
 
 
 @pytest.mark.asyncio
-async def test_list_faculty(db_session):
+async def test_list_faculty(db_session, department):
     service = FacultyService(db_session)
+    ece_department = Department(
+        code="ECE",
+        name="Electronics and Communication Engineering",
+    )
+    db_session.add(ece_department)
+    await db_session.commit()
+    await db_session.refresh(ece_department)
 
     await service.create_faculty(
         Faculty(
             employee_id="EMP017",
             name="CSE Faculty",
             email="servicefilter1@example.com",
-            department="CSE",
+            department_id=department.id,
         )
     )
 
@@ -148,7 +156,7 @@ async def test_list_faculty(db_session):
             employee_id="EMP018",
             name="ECE Faculty",
             email="servicefilter2@example.com",
-            department="ECE",
+            department_id=ece_department.id,
         )
     )
 
@@ -156,4 +164,7 @@ async def test_list_faculty(db_session):
 
     assert total == 2
     assert len(faculties) == 2
-    assert {faculty.department for faculty in faculties} == {"CSE", "ECE"}
+    assert {faculty.department_id for faculty in faculties} == {
+        department.id,
+        ece_department.id,
+    }

@@ -8,11 +8,11 @@ from app.features.courses.repository import CourseRepository
 
 
 @pytest.mark.asyncio
-async def test_get_course_by_code(db_session):
+async def test_get_course_by_code(db_session, department):
     course = Course(
         code="CS505",
         name="Repository Test",
-        department="CSE",
+        department_id=department.id,
         semester=5,
         credits=4,
     )
@@ -30,7 +30,7 @@ async def test_get_course_by_code(db_session):
 
 
 @pytest.mark.asyncio
-async def test_get_course_by_code_not_found(db_session):
+async def test_get_course_by_code_not_found(db_session, department):
     repository = CourseRepository(db_session)
 
     result = await repository.get_by_code("DOES_NOT_EXIST")
@@ -39,12 +39,12 @@ async def test_get_course_by_code_not_found(db_session):
 
 
 @pytest.mark.asyncio
-async def test_create_course(db_session):
+async def test_create_course(db_session, department):
     repository = CourseRepository(db_session)
     course_details = Course(
         code="CS506",
         name="Course Creation Test",
-        department="CSE",
+        department_id=department.id,
         semester=5,
         credits=4,
     )
@@ -55,12 +55,12 @@ async def test_create_course(db_session):
 
 
 @pytest.mark.asyncio
-async def test_get_course_by_id(db_session):
+async def test_get_course_by_id(db_session, department):
     repository = CourseRepository(db_session)
     course_details = Course(
         code="CS507",
         name="Course Get Test",
-        department="CSE",
+        department_id=department.id,
         semester=5,
         credits=4,
     )
@@ -73,7 +73,7 @@ async def test_get_course_by_id(db_session):
 
 
 @pytest.mark.asyncio
-async def test_get_course_by_random_id(db_session):
+async def test_get_course_by_random_id(db_session, department):
     repository = CourseRepository(db_session)
     course = await repository.get_by_id(uuid.uuid4())
 
@@ -81,13 +81,13 @@ async def test_get_course_by_random_id(db_session):
 
 
 @pytest.mark.asyncio
-async def test_list_courses(db_session):
+async def test_list_courses(db_session, department):
     repository = CourseRepository(db_session)
 
     course1 = Course(
         code="CS508",
         name="Course One",
-        department="CSE",
+        department_id=department.id,
         semester=5,
         credits=4,
     )
@@ -95,7 +95,7 @@ async def test_list_courses(db_session):
     course2 = Course(
         code="CS509",
         name="Course Two",
-        department="ECE",
+        department_id=department.id,
         semester=6,
         credits=3,
     )
@@ -112,7 +112,7 @@ async def test_list_courses(db_session):
 
 
 @pytest.mark.asyncio
-async def test_list_courses_pagination(db_session):
+async def test_list_courses_pagination(db_session, department):
     repository = CourseRepository(db_session)
 
     for index in range(3):
@@ -120,7 +120,7 @@ async def test_list_courses_pagination(db_session):
             Course(
                 code=f"CS51{index}",
                 name=f"Paged Course {index}",
-                department="CSE",
+                department_id=department.id,
                 semester=5,
                 credits=4,
             )
@@ -132,13 +132,13 @@ async def test_list_courses_pagination(db_session):
 
 
 @pytest.mark.asyncio
-async def test_update_course(db_session):
+async def test_update_course(db_session, department):
     repository = CourseRepository(db_session)
 
     course = Course(
         code="CS510",
         name="Update Test",
-        department="CSE",
+        department_id=department.id,
         semester=5,
         credits=4,
     )
@@ -163,7 +163,7 @@ async def test_update_course(db_session):
 
 
 @pytest.mark.asyncio
-async def test_update_course_not_found(db_session):
+async def test_update_course_not_found(db_session, department):
     repository = CourseRepository(db_session)
 
     course = await repository.update(
@@ -175,13 +175,13 @@ async def test_update_course_not_found(db_session):
 
 
 @pytest.mark.asyncio
-async def test_deactivate_course(db_session):
+async def test_deactivate_course(db_session, department):
     repository = CourseRepository(db_session)
 
     course = Course(
         code="CS511",
         name="Deactivate Repository Test",
-        department="CSE",
+        department_id=department.id,
         semester=5,
         credits=4,
     )
@@ -196,7 +196,7 @@ async def test_deactivate_course(db_session):
 
 
 @pytest.mark.asyncio
-async def test_deactivate_course_not_found(db_session):
+async def test_deactivate_course_not_found(db_session, department):
     repository = CourseRepository(db_session)
 
     result = await repository.deactivate(uuid.uuid4())
@@ -205,13 +205,13 @@ async def test_deactivate_course_not_found(db_session):
 
 
 @pytest.mark.asyncio
-async def test_list_excludes_inactive_courses(db_session):
+async def test_list_excludes_inactive_courses(db_session, department):
     repository = CourseRepository(db_session)
 
     active_course = Course(
         code="CS512",
         name="Active Course",
-        department="CSE",
+        department_id=department.id,
         semester=5,
         credits=4,
     )
@@ -219,7 +219,7 @@ async def test_list_excludes_inactive_courses(db_session):
     inactive_course = Course(
         code="CS513",
         name="Inactive Course",
-        department="ECE",
+        department_id=department.id,
         semester=6,
         credits=3,
     )
@@ -237,14 +237,16 @@ async def test_list_excludes_inactive_courses(db_session):
 
 
 @pytest.mark.asyncio
-async def test_duplicate_course_code_is_rejected_at_persistence_layer(db_session):
+async def test_duplicate_course_code_is_rejected_at_persistence_layer(
+    db_session, department
+):
     repository = CourseRepository(db_session)
 
     await repository.create(
         Course(
             code="CS514",
             name="First",
-            department="CSE",
+            department_id=department.id,
             semester=5,
             credits=4,
         )
@@ -255,7 +257,7 @@ async def test_duplicate_course_code_is_rejected_at_persistence_layer(db_session
             Course(
                 code="CS514",
                 name="Duplicate",
-                department="ECE",
+                department_id=department.id,
                 semester=6,
                 credits=3,
             )

@@ -6,12 +6,12 @@ from app.features.faculty.model import Faculty
 
 
 @pytest.mark.asyncio
-async def test_create_faculty(db_session):
+async def test_create_faculty(db_session, department):
     faculty = Faculty(
         employee_id="EMP001",
         name="Test Faculty",
         email="faculty@example.com",
-        department="CSE",
+        department_id=department.id,
     )
 
     db_session.add(faculty)
@@ -28,12 +28,12 @@ async def test_create_faculty(db_session):
 
 
 @pytest.mark.asyncio
-async def test_faculty_employee_id_must_be_unique(db_session):
+async def test_faculty_employee_id_must_be_unique(db_session, department):
     faculty = Faculty(
         employee_id="EMP002",
         name="Test Faculty",
         email="faculty@example.com",
-        department="CSE",
+        department_id=department.id,
     )
     db_session.add(faculty)
     await db_session.flush()
@@ -42,7 +42,7 @@ async def test_faculty_employee_id_must_be_unique(db_session):
         employee_id="EMP002",
         name="Test Faculty 2",
         email="faculty2@example.com",
-        department="ECE",
+        department_id=department.id,
     )
     db_session.add(duplicate_faculty)
 
@@ -53,12 +53,12 @@ async def test_faculty_employee_id_must_be_unique(db_session):
 
 
 @pytest.mark.asyncio
-async def test_faculty_is_active_defaults_to_true(db_session):
+async def test_faculty_is_active_defaults_to_true(db_session, department):
     faculty = Faculty(
         employee_id="EMP003",
         name="Active Faculty",
         email="active@example.com",
-        department="CSE",
+        department_id=department.id,
     )
 
     db_session.add(faculty)

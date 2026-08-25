@@ -3,7 +3,7 @@ from datetime import time as TimeType
 from enum import Enum
 from uuid import UUID
 
-from sqlalchemy import Date, ForeignKey, String, Time, UniqueConstraint
+from sqlalchemy import Date, ForeignKey, Integer, String, Time, UniqueConstraint
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column
@@ -26,6 +26,12 @@ class AttendanceSession(UUIDMixin, TimestampMixin, Base):
         nullable=False,
     )
 
+    department_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True),
+        ForeignKey("departments.id"),
+        nullable=False,
+    )
+
     session_date: Mapped[DateType] = mapped_column(
         Date,
         nullable=False,
@@ -41,12 +47,8 @@ class AttendanceSession(UUIDMixin, TimestampMixin, Base):
         nullable=False,
     )
 
-    department: Mapped[str] = mapped_column(
-        String(100),
-        nullable=False,
-    )
-
     semester: Mapped[int] = mapped_column(
+        Integer,
         nullable=False,
     )
 

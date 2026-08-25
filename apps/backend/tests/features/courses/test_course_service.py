@@ -8,13 +8,13 @@ from app.features.courses.service import CourseService
 
 
 @pytest.mark.asyncio
-async def test_course_already_exists_error(db_session):
+async def test_course_already_exists_error(db_session, department):
     service = CourseService(db_session)
 
     course1 = Course(
         code="CS515",
         name="Course Error Test 1",
-        department="CSE",
+        department_id=department.id,
         semester=5,
         credits=4,
     )
@@ -24,7 +24,7 @@ async def test_course_already_exists_error(db_session):
     course2 = Course(
         code="CS515",
         name="Course Error Test 2",
-        department="ECE",
+        department_id=department.id,
         semester=6,
         credits=3,
     )
@@ -34,13 +34,13 @@ async def test_course_already_exists_error(db_session):
 
 
 @pytest.mark.asyncio
-async def test_get_course(db_session):
+async def test_get_course(db_session, department):
     service = CourseService(db_session)
 
     course = Course(
         code="CS516",
         name="Service Get Test",
-        department="CSE",
+        department_id=department.id,
         semester=5,
         credits=4,
     )
@@ -54,7 +54,7 @@ async def test_get_course(db_session):
 
 
 @pytest.mark.asyncio
-async def test_course_not_found_error(db_session):
+async def test_course_not_found_error(db_session, department):
     service = CourseService(db_session)
 
     course_id = uuid4()
@@ -66,14 +66,14 @@ async def test_course_not_found_error(db_session):
 
 
 @pytest.mark.asyncio
-async def test_list_courses(db_session):
+async def test_list_courses(db_session, department):
     service = CourseService(db_session)
 
     await service.create_course(
         Course(
             code="CS517",
             name="CSE Course",
-            department="CSE",
+            department_id=department.id,
             semester=5,
             credits=4,
         )
@@ -83,7 +83,7 @@ async def test_list_courses(db_session):
         Course(
             code="CS518",
             name="ECE Course",
-            department="ECE",
+            department_id=department.id,
             semester=6,
             credits=3,
         )
@@ -97,13 +97,13 @@ async def test_list_courses(db_session):
 
 
 @pytest.mark.asyncio
-async def test_update_course(db_session):
+async def test_update_course(db_session, department):
     service = CourseService(db_session)
 
     course = Course(
         code="CS519",
         name="Service Update Test",
-        department="CSE",
+        department_id=department.id,
         semester=5,
         credits=4,
     )
@@ -124,7 +124,7 @@ async def test_update_course(db_session):
 
 
 @pytest.mark.asyncio
-async def test_update_course_not_found(db_session):
+async def test_update_course_not_found(db_session, department):
     service = CourseService(db_session)
 
     course_id = uuid4()
@@ -137,13 +137,13 @@ async def test_update_course_not_found(db_session):
 
 
 @pytest.mark.asyncio
-async def test_deactivate_course(db_session):
+async def test_deactivate_course(db_session, department):
     service = CourseService(db_session)
 
     course = Course(
         code="CS520",
         name="Deactivate Service Test",
-        department="CSE",
+        department_id=department.id,
         semester=5,
         credits=4,
     )
@@ -157,7 +157,7 @@ async def test_deactivate_course(db_session):
 
 
 @pytest.mark.asyncio
-async def test_deactivate_course_not_found(db_session):
+async def test_deactivate_course_not_found(db_session, department):
     service = CourseService(db_session)
 
     course_id = uuid4()
@@ -167,13 +167,13 @@ async def test_deactivate_course_not_found(db_session):
 
 
 @pytest.mark.asyncio
-async def test_deactivate_already_inactive_course(db_session):
+async def test_deactivate_already_inactive_course(db_session, department):
     service = CourseService(db_session)
 
     course = Course(
         code="CS521",
         name="Already Inactive",
-        department="CSE",
+        department_id=department.id,
         semester=5,
         credits=4,
     )

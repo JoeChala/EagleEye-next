@@ -1,3 +1,4 @@
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, status
@@ -61,11 +62,11 @@ async def get_student(
     status_code=status.HTTP_200_OK,
 )
 async def get_students(
-    offset: int = Query(0, ge=0),
-    limit: int = Query(20, ge=1, le=100),
-    department: str | None = Query(default=None),
-    semester: int | None = Query(default=None, ge=1, le=8),
-    section: str | None = Query(default=None),
+    offset: Annotated[int, Query(ge=0)] = 0,
+    limit: Annotated[int, Query(ge=1, le=100)] = 20,
+    department_id: Annotated[UUID | None, Query()] = None,
+    semester: Annotated[int | None, Query(ge=1, le=8)] = None,
+    section: Annotated[str | None, Query()] = None,
     session: AsyncSession = Depends(get_db),
 ) -> StudentListResponse:
 
@@ -74,7 +75,7 @@ async def get_students(
     students, total = await service.get_students(
         offset=offset,
         limit=limit,
-        department=department,
+        department_id=department_id,
         semester=semester,
         section=section,
     )

@@ -14,6 +14,7 @@ from sqlalchemy.ext.asyncio import (
 
 from app.db.session import get_db
 from app.features.courses.model import Course
+from app.features.departments.model import Department
 from app.main import app
 
 load_dotenv()
@@ -76,16 +77,52 @@ async def clean_database():
         await connection.execute(text("DELETE FROM students"))
         await connection.execute(text("DELETE FROM faculty"))
         await connection.execute(text("DELETE FROM courses"))
+        await connection.execute(text("DELETE FROM departments"))
 
     await engine.dispose()
 
 
 @pytest_asyncio.fixture
-async def course(db_session: AsyncSession):
+async def department(db_session: AsyncSession):
+    department = Department(
+        code="CSE",
+        name="Computer Science and Engineering",
+    )
+
+    db_session.add(department)
+    await db_session.commit()
+    await db_session.refresh(department)
+
+    return department
+
+
+@pytest_asyncio.fixture
+async def department_factory(db_session: AsyncSession):
+    async def create_department(
+        *,
+        code: str,
+        name: str,
+    ) -> Department:
+        department = Department(
+            code=code,
+            name=name,
+        )
+
+        db_session.add(department)
+        await db_session.commit()
+        await db_session.refresh(department)
+
+        return department
+
+    return create_department
+
+
+@pytest_asyncio.fixture
+async def course(db_session: AsyncSession, department: Department):
     course = Course(
         code="CS501",
         name="Database Management Systems",
-        department="CSE",
+        department_id=department.id,
         semester=5,
         credits=4,
     )

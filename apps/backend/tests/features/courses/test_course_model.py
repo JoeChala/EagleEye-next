@@ -6,11 +6,11 @@ from app.features.courses.model import Course
 
 
 @pytest.mark.asyncio
-async def test_create_course(db_session):
+async def test_create_course(db_session, department):
     course = Course(
         code="CS501",
         name="Database Management Systems",
-        department="CSE",
+        department_id=department.id,
         semester=5,
         credits=4,
     )
@@ -28,11 +28,11 @@ async def test_create_course(db_session):
 
 
 @pytest.mark.asyncio
-async def test_course_code_must_be_unique(db_session):
+async def test_course_code_must_be_unique(db_session, department):
     course = Course(
         code="CS502",
         name="Operating Systems",
-        department="CSE",
+        department_id=department.id,
         semester=5,
         credits=4,
     )
@@ -42,7 +42,7 @@ async def test_course_code_must_be_unique(db_session):
     duplicate_course = Course(
         code="CS502",
         name="Computer Networks",
-        department="CSE",
+        department_id=department.id,
         semester=6,
         credits=3,
     )
@@ -55,11 +55,11 @@ async def test_course_code_must_be_unique(db_session):
 
 
 @pytest.mark.asyncio
-async def test_course_is_active_defaults_to_true(db_session):
+async def test_course_is_active_defaults_to_true(db_session, department):
     course = Course(
         code="CS503",
         name="Algorithms",
-        department="CSE",
+        department_id=department.id,
         semester=5,
         credits=3,
     )
@@ -72,11 +72,11 @@ async def test_course_is_active_defaults_to_true(db_session):
 
 
 @pytest.mark.asyncio
-async def test_course_timestamps_are_populated(db_session):
+async def test_course_timestamps_are_populated(db_session, department):
     course = Course(
         code="CS504",
         name="Software Engineering",
-        department="CSE",
+        department_id=department.id,
         semester=6,
         credits=3,
     )

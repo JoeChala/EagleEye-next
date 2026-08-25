@@ -5,14 +5,14 @@ from httpx import AsyncClient
 
 
 @pytest.mark.asyncio
-async def test_create_student(client: AsyncClient):
+async def test_create_student(client: AsyncClient, department):
     response = await client.post(
         "/api/v1/students",
         json={
             "roll_number": "API001",
             "name": "API Test Student",
             "email": "api@example.com",
-            "department": "CSE",
+            "department_id": str(department.id),
             "semester": 5,
             "section": "A",
         },
@@ -28,12 +28,12 @@ async def test_create_student(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_create_student_duplicate_roll_number(client: AsyncClient):
+async def test_create_student_duplicate_roll_number(client: AsyncClient, department):
     student = {
         "roll_number": "API002",
         "name": "API Test Student",
         "email": "api@example.com",
-        "department": "CSE",
+        "department_id": str(department.id),
         "semester": 5,
         "section": "A",
     }
@@ -58,14 +58,14 @@ async def test_create_student_duplicate_roll_number(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_get_student(client: AsyncClient):
+async def test_get_student(client: AsyncClient, department):
     create_response = await client.post(
         "/api/v1/students",
         json={
             "roll_number": "API003",
             "name": "API Get Student",
             "email": "api-get@example.com",
-            "department": "CSE",
+            "department_id": str(department.id),
             "semester": 5,
             "section": "A",
         },
@@ -86,7 +86,7 @@ async def test_get_student(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_get_student_not_found(client: AsyncClient):
+async def test_get_student_not_found(client: AsyncClient, department):
     student_id = uuid.uuid4()
 
     response = await client.get(f"/api/v1/students/{student_id}")
@@ -99,14 +99,14 @@ async def test_get_student_not_found(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_get_students(client: AsyncClient):
+async def test_get_students(client: AsyncClient, department):
     await client.post(
         "/api/v1/students",
         json={
             "roll_number": "API004",
             "name": "API Student One",
             "email": "api4@example.com",
-            "department": "CSE",
+            "department_id": str(department.id),
             "semester": 5,
             "section": "A",
         },
@@ -118,7 +118,7 @@ async def test_get_students(client: AsyncClient):
             "roll_number": "API005",
             "name": "API Student Two",
             "email": "api5@example.com",
-            "department": "CSE",
+            "department_id": str(department.id),
             "semester": 6,
             "section": "B",
         },
@@ -140,7 +140,7 @@ async def test_get_students(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_get_students_pagination(client: AsyncClient):
+async def test_get_students_pagination(client: AsyncClient, department):
     for i in range(3):
         response = await client.post(
             "/api/v1/students",
@@ -148,7 +148,7 @@ async def test_get_students_pagination(client: AsyncClient):
                 "roll_number": f"PAGE00{i}",
                 "name": f"Page Student {i}",
                 "email": f"page{i}@example.com",
-                "department": "CSE",
+                "department_id": str(department.id),
                 "semester": 5,
                 "section": "A",
             },
@@ -169,14 +169,14 @@ async def test_get_students_pagination(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_update_student(client: AsyncClient):
+async def test_update_student(client: AsyncClient, department):
     create_response = await client.post(
         "/api/v1/students",
         json={
             "roll_number": "API006",
             "name": "Before Update",
             "email": "update-api@example.com",
-            "department": "CSE",
+            "department_id": str(department.id),
             "semester": 5,
             "section": "A",
         },
@@ -209,7 +209,7 @@ async def test_update_student(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_update_student_not_found(client: AsyncClient):
+async def test_update_student_not_found(client: AsyncClient, department):
     student_id = uuid.uuid4()
 
     response = await client.patch(
@@ -227,14 +227,14 @@ async def test_update_student_not_found(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_deactivate_student(client: AsyncClient):
+async def test_deactivate_student(client: AsyncClient, department):
     create_response = await client.post(
         "/api/v1/students",
         json={
             "roll_number": "API007",
             "name": "Deactivate Test",
             "email": "deactivate@example.com",
-            "department": "CSE",
+            "department_id": str(department.id),
             "semester": 5,
             "section": "A",
         },
@@ -260,6 +260,7 @@ async def test_deactivate_student(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_deactivated_student_not_in_list(
     client: AsyncClient,
+    department,
 ):
     create_response = await client.post(
         "/api/v1/students",
@@ -267,7 +268,7 @@ async def test_deactivated_student_not_in_list(
             "roll_number": "API008",
             "name": "Inactive Student",
             "email": "inactive@example.com",
-            "department": "CSE",
+            "department_id": str(department.id),
             "semester": 5,
             "section": "A",
         },
@@ -295,6 +296,7 @@ async def test_deactivated_student_not_in_list(
 @pytest.mark.asyncio
 async def test_deactivate_student_not_found(
     client: AsyncClient,
+    department,
 ):
     student_id = uuid.uuid4()
 
@@ -310,8 +312,9 @@ async def test_deactivate_student_not_found(
 @pytest.mark.asyncio
 async def test_get_students_by_department(
     client: AsyncClient,
+    department,
 ):
-    response = await client.get("/api/v1/students?department=CSE")
+    response = await client.get(f"/api/v1/students?department_id={department.id}")
 
     assert response.status_code == 200
 
@@ -321,12 +324,13 @@ async def test_get_students_by_department(
     assert "total" in data
 
     for student in data["items"]:
-        assert student["department"] == "CSE"
+        assert student["department_id"] == str(department.id)
 
 
 @pytest.mark.asyncio
 async def test_get_students_by_semester(
     client: AsyncClient,
+    department,
 ):
     response = await client.get("/api/v1/students?semester=5")
 
@@ -341,6 +345,7 @@ async def test_get_students_by_semester(
 @pytest.mark.asyncio
 async def test_get_students_by_section(
     client: AsyncClient,
+    department,
 ):
     response = await client.get("/api/v1/students?section=A")
 
@@ -355,15 +360,18 @@ async def test_get_students_by_section(
 @pytest.mark.asyncio
 async def test_get_students_with_multiple_filters(
     client: AsyncClient,
+    department,
 ):
-    response = await client.get("/api/v1/students?department=CSE&semester=5&section=A")
+    response = await client.get(
+        f"/api/v1/students?department_id={department.id}&semester=5&section=A"
+    )
 
     assert response.status_code == 200
 
     data = response.json()
 
     for student in data["items"]:
-        assert student["department"] == "CSE"
+        assert student["department_id"] == str(department.id)
         assert student["semester"] == 5
         assert student["section"] == "A"
 
@@ -371,8 +379,11 @@ async def test_get_students_with_multiple_filters(
 @pytest.mark.asyncio
 async def test_students_filter_with_pagination(
     client: AsyncClient,
+    department,
 ):
-    response = await client.get("/api/v1/students?department=CSE&offset=0&limit=5")
+    response = await client.get(
+        f"/api/v1/students?department_id={department.id}&offset=0&limit=5"
+    )
 
     assert response.status_code == 200
 
@@ -383,14 +394,14 @@ async def test_students_filter_with_pagination(
     assert len(data["items"]) <= 5
 
     for student in data["items"]:
-        assert student["department"] == "CSE"
+        assert student["department_id"] == str(department.id)
 
 
 @pytest.mark.asyncio
 async def test_get_students_with_no_matching_department(
     client: AsyncClient,
 ):
-    response = await client.get("/api/v1/students?department=NONEXISTENT")
+    response = await client.get(f"/api/v1/students?department_id={uuid.uuid4()}")
 
     assert response.status_code == 200
 
@@ -403,6 +414,7 @@ async def test_get_students_with_no_matching_department(
 @pytest.mark.asyncio
 async def test_get_students_invalid_semester(
     client: AsyncClient,
+    department,
 ):
     response = await client.get("/api/v1/students?semester=0")
 
@@ -412,6 +424,7 @@ async def test_get_students_invalid_semester(
 @pytest.mark.asyncio
 async def test_get_students_semester_above_maximum(
     client: AsyncClient,
+    department,
 ):
     response = await client.get("/api/v1/students?semester=9")
 
@@ -421,6 +434,7 @@ async def test_get_students_semester_above_maximum(
 @pytest.mark.asyncio
 async def test_get_students_negative_offset(
     client: AsyncClient,
+    department,
 ):
     response = await client.get("/api/v1/students?offset=-1")
 
@@ -430,6 +444,7 @@ async def test_get_students_negative_offset(
 @pytest.mark.asyncio
 async def test_get_students_invalid_limit(
     client: AsyncClient,
+    department,
 ):
     response = await client.get("/api/v1/students?limit=0")
 
@@ -439,6 +454,7 @@ async def test_get_students_invalid_limit(
 @pytest.mark.asyncio
 async def test_get_students_limit_too_large(
     client: AsyncClient,
+    department,
 ):
     response = await client.get("/api/v1/students?limit=101")
 
