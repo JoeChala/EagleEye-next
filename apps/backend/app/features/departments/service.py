@@ -42,17 +42,27 @@ class DepartmentService:
 
         return departments, total
 
-    async def update_department(
-        self,
-        department_id: UUID,
-        updates: dict,
-    ) -> Department:
-        department = await self.repository.update(department_id, updates)
+    async def update_department(self, department_id: UUID, updates: dict) -> Department:
+        department = await self.repository.get_by_id(department_id)
 
         if department is None:
             raise DepartmentNotFoundError(department_id)
 
-        return department
+        if "code" in updates:
+            existing_department = await self.repository.get_by_code(updates["code"])
+
+            if (
+                existing_department is not None
+                and existing_department.id != department_id
+            ):
+                raise DepartmentAlreadyExistsError(updates["code"])
+
+        updated_department = await self.repository.update(department_id, updates)
+
+        if updated_department is None:
+            raise DepartmentNotFoundError(department_id)
+
+        return updated_department
 
     async def deactivate_department(self, department_id: UUID) -> Department:
         department = await self.repository.deactivate(department_id)
@@ -60,4 +70,9 @@ class DepartmentService:
         if department is None:
             raise DepartmentNotFoundError(department_id)
 
-        return department
+        deactivated_department = await self.repository.deactivate(department_id)
+
+        if deactivated_department is None:
+            raise DepartmentNotFoundError(department_id)
+
+        return deactivated_department
