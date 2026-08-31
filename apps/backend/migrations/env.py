@@ -14,6 +14,7 @@ from app.features.attendance.model import (  # noqa: F401
 )
 from app.features.courses.model import Course  # noqa: F401
 from app.features.departments.model import Department  # noqa: F401
+from app.features.enrollments.model import Enrollment  # noqa: F401
 from app.features.faculty.model import Faculty  # noqa: F401
 from app.features.students.model import Student  # noqa: F401
 

@@ -7,6 +7,7 @@ from app.features.attendance.router import record_router
 from app.features.attendance.router import router as attendance_router
 from app.features.courses.router import router as course_router
 from app.features.departments.router import router as department_router
+from app.features.enrollments.router import router as enrollment_router
 from app.features.faculty.router import router as faculty_router
 from app.features.students.router import router as student_router
 from app.utils.responses import error_response, success_response
@@ -18,6 +19,7 @@ api_router.include_router(faculty_router)
 api_router.include_router(course_router)
 api_router.include_router(attendance_router)
 api_router.include_router(record_router)
+api_router.include_router(enrollment_router)
 
 
 @api_router.get("/health")

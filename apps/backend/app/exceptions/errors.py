@@ -68,3 +68,28 @@ class AttendanceSessionDepartmentMismatchError(Exception):
             "Attendance session department must match the course department "
             f"for course '{course_id}' and department '{department_id}'"
         )
+
+
+class EnrollmentAlreadyExistsError(Exception):
+    def __init__(self, student_id: UUID, course_id: UUID):
+        super().__init__(
+            f"Student '{student_id}' is already enrolled in course '{course_id}'"
+        )
+
+
+class EnrollmentNotFoundError(Exception):
+    def __init__(self, enrollment_id: UUID):
+        super().__init__(f"Enrollment with id '{enrollment_id}' was not found")
+
+
+class InvalidEnrollmentError(Exception):
+    def __init__(self, message: str):
+        super().__init__(message)
+
+
+class StudentCourseEnrollmentNotFoundError(Exception):
+    def __init__(self, student_id: UUID, course_id: UUID):
+        super().__init__(
+            f"Enrollment for student '{student_id}' "
+            f"in course '{course_id}' was not found"
+        )

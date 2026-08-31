@@ -12,8 +12,11 @@ from app.exceptions.errors import (
     CourseNotFoundError,
     DepartmentAlreadyExistsError,
     DepartmentNotFoundError,
+    EnrollmentAlreadyExistsError,
+    EnrollmentNotFoundError,
     FacultyAlreadyExistsError,
     FacultyNotFoundError,
+    InvalidEnrollmentError,
     StudentAlreadyExistsError,
     StudentNotFoundError,
 )
@@ -151,7 +154,38 @@ def _attendance_already_exists_handler(
     )
 
 
+def _enrollment_already_exists_handler(_: Request, exc: Exception):
+    error = cast(EnrollmentAlreadyExistsError, exc)
+    return JSONResponse(
+        content={
+            "detail": str(error),
+        },
+        status_code=409,
+    )
+
+
+def _enrollment_does_not_exist_handler(_: Request, exc: Exception):
+    error = cast(EnrollmentNotFoundError, exc)
+    return JSONResponse(
+        content={
+            "detail": str(error),
+        },
+        status_code=404,
+    )
+
+
+def _invalid_enrollment_handler(_: Request, exc: Exception):
+    error = cast(InvalidEnrollmentError, exc)
+    return JSONResponse(
+        content={
+            "detail": str(error),
+        },
+        status_code=400,
+    )
+
+
 def register_exception_handlers(app: FastAPI) -> None:
+
     app.add_exception_handler(HTTPException, _http_exception_handler)
     app.add_exception_handler(RequestValidationError, _validation_exception_handler)
     app.add_exception_handler(Exception, _generic_exception_handler)
@@ -160,13 +194,11 @@ def register_exception_handlers(app: FastAPI) -> None:
     )
     app.add_exception_handler(StudentNotFoundError, _student_not_found)
     app.add_exception_handler(
-        DepartmentAlreadyExistsError,
-        _department_already_exists_handler,
+        DepartmentAlreadyExistsError, _department_already_exists_handler
     )
     app.add_exception_handler(DepartmentNotFoundError, _department_not_found_handler)
     app.add_exception_handler(
-        FacultyAlreadyExistsError,
-        _faculty_already_exists_handler,
+        FacultyAlreadyExistsError, _faculty_already_exists_handler
     )
     app.add_exception_handler(FacultyNotFoundError, _faculty_not_found_handler)
     app.add_exception_handler(CourseAlreadyExistsError, _course_already_exists_handler)
@@ -176,6 +208,12 @@ def register_exception_handlers(app: FastAPI) -> None:
         _attendance_session_department_mismatch_handler,
     )
     app.add_exception_handler(
-        AttendanceAlreadyExistsError,
-        _attendance_already_exists_handler,
+        AttendanceAlreadyExistsError, _attendance_already_exists_handler
     )
+    app.add_exception_handler(
+        EnrollmentAlreadyExistsError, _enrollment_already_exists_handler
+    )
+    app.add_exception_handler(
+        EnrollmentNotFoundError, _enrollment_does_not_exist_handler
+    )
+    app.add_exception_handler(InvalidEnrollmentError, _invalid_enrollment_handler)

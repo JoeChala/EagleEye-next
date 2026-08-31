@@ -15,6 +15,7 @@ from sqlalchemy.ext.asyncio import (
 from app.db.session import get_db
 from app.features.courses.model import Course
 from app.features.departments.model import Department
+from app.features.students.model import Student
 from app.main import app
 
 load_dotenv()
@@ -62,24 +63,18 @@ async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
 
 
 @pytest_asyncio.fixture(autouse=True)
-async def clean_database():
+async def clean_database(db_session: AsyncSession):
     yield
 
-    engine = create_async_engine(
-        TEST_DATABASE_URL,
-        echo=False,
-        pool_pre_ping=True,
-    )
+    await db_session.execute(text("DELETE FROM attendance_records"))
+    await db_session.execute(text("DELETE FROM attendance_sessions"))
+    await db_session.execute(text("DELETE FROM enrollments"))
+    await db_session.execute(text("DELETE FROM students"))
+    await db_session.execute(text("DELETE FROM faculty"))
+    await db_session.execute(text("DELETE FROM courses"))
+    await db_session.execute(text("DELETE FROM departments"))
 
-    async with engine.begin() as connection:
-        await connection.execute(text("DELETE FROM attendance_records"))
-        await connection.execute(text("DELETE FROM attendance_sessions"))
-        await connection.execute(text("DELETE FROM students"))
-        await connection.execute(text("DELETE FROM faculty"))
-        await connection.execute(text("DELETE FROM courses"))
-        await connection.execute(text("DELETE FROM departments"))
-
-    await engine.dispose()
+    await db_session.commit()
 
 
 @pytest_asyncio.fixture
@@ -132,3 +127,24 @@ async def course(db_session: AsyncSession, department: Department):
     await db_session.refresh(course)
 
     return course
+
+
+@pytest_asyncio.fixture
+async def student(
+    db_session: AsyncSession,
+    department: Department,
+) -> Student:
+    student = Student(
+        roll_number="ENR001",
+        name="Enrollment Student",
+        email="enrollment@example.com",
+        department_id=department.id,
+        semester=5,
+        section="A",
+    )
+
+    db_session.add(student)
+    await db_session.commit()
+    await db_session.refresh(student)
+
+    return student
