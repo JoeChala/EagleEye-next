@@ -14,6 +14,7 @@ from app.features.attendance.schema import (
     AttendanceRecordResponse,
     AttendanceSessionCreate,
     AttendanceSessionResponse,
+    AttendanceSummaryResponse,
     BulkAttendanceCreate,
     BulkAttendanceResponse,
 )
@@ -23,6 +24,7 @@ from app.features.attendance.service import (
 )
 from app.features.courses.repository import CourseRepository
 from app.features.departments.repository import DepartmentRepository
+from app.features.enrollments.repository import EnrollmentRepository
 from app.features.students.repository import StudentRepository
 
 router = APIRouter(
@@ -31,6 +33,10 @@ router = APIRouter(
 )
 record_router = APIRouter(
     prefix="/attendance/records",
+    tags=["Attendance"],
+)
+attendance_router = APIRouter(
+    prefix="/attendance",
     tags=["Attendance"],
 )
 
@@ -54,11 +60,10 @@ def get_attendance_record_service(
     record_repository = AttendanceRecordRepository(db)
     session_repository = AttendanceSessionRepository(db)
     student_repository = StudentRepository(db)
+    enrollment_repository = EnrollmentRepository(db)
 
     return AttendanceRecordService(
-        record_repository,
-        session_repository,
-        student_repository,
+        record_repository, session_repository, student_repository, enrollment_repository
     )
 
 
@@ -159,3 +164,28 @@ async def create_bulk_attendance(
             for record in created_records
         ],
     )
+
+
+@attendance_router.get(
+    "",
+    response_model=AttendanceSummaryResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def get_attendance_summary(
+    student: UUID,
+    course: UUID,
+    session: AsyncSession = Depends(get_db),
+) -> AttendanceSummaryResponse:
+    service = AttendanceRecordService(
+        AttendanceRecordRepository(session),
+        AttendanceSessionRepository(session),
+        StudentRepository(session),
+        EnrollmentRepository(session),
+    )
+
+    summary = await service.get_student_course_summary(
+        student,
+        course,
+    )
+
+    return AttendanceSummaryResponse(**summary)

@@ -69,3 +69,23 @@ class AttendanceRecordRepository:
         )
 
         return result.scalar_one_or_none()
+
+    async def get_by_student_and_course(
+        self,
+        student_id: UUID,
+        course_id: UUID,
+    ) -> list[AttendanceRecord]:
+        result = await self.session.execute(
+            select(AttendanceRecord)
+            .join(
+                AttendanceSession,
+                AttendanceRecord.session_id == AttendanceSession.id,
+            )
+            .where(
+                AttendanceRecord.student_id == student_id,
+                AttendanceSession.course_id == course_id,
+            )
+            .order_by(AttendanceSession.session_date)
+        )
+
+        return list(result.scalars().all())

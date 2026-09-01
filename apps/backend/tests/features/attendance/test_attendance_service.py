@@ -612,3 +612,232 @@ async def test_create_attendance_record_inactive_enrollment(
 
     with pytest.raises(StudentNotEnrolledError):
         await service.create_record(record)
+
+
+@pytest.mark.asyncio
+async def test_get_student_course_summary(
+    db_session,
+    student,
+    course,
+    department,
+):
+    session_one = await create_session(
+        db_session,
+        course,
+        department,
+    )
+
+    session_two = await create_session(
+        db_session,
+        course,
+        department,
+    )
+
+    session_three = await create_session(
+        db_session,
+        course,
+        department,
+    )
+
+    enrollment = Enrollment(
+        student_id=student.id,
+        course_id=course.id,
+    )
+
+    db_session.add(enrollment)
+
+    db_session.add_all(
+        [
+            AttendanceRecord(
+                session_id=session_one.id,
+                student_id=student.id,
+                status=AttendanceStatus.PRESENT,
+            ),
+            AttendanceRecord(
+                session_id=session_two.id,
+                student_id=student.id,
+                status=AttendanceStatus.PRESENT,
+            ),
+            AttendanceRecord(
+                session_id=session_three.id,
+                student_id=student.id,
+                status=AttendanceStatus.ABSENT,
+            ),
+        ]
+    )
+
+    await db_session.commit()
+
+    service = AttendanceRecordService(
+        AttendanceRecordRepository(db_session),
+        AttendanceSessionRepository(db_session),
+        StudentRepository(db_session),
+        EnrollmentRepository(db_session),
+    )
+
+    result = await service.get_student_course_summary(
+        student.id,
+        course.id,
+    )
+
+    assert result["student_id"] == student.id
+    assert result["course_id"] == course.id
+    assert result["total_sessions"] == 3
+    assert result["present"] == 2
+    assert result["absent"] == 1
+    assert result["attendance_percentage"] == pytest.approx(66.67)
+
+
+@pytest.mark.asyncio
+async def test_get_student_course_summary_student_not_found(
+    db_session,
+    course,
+):
+    student_id = uuid4()
+
+    service = AttendanceRecordService(
+        AttendanceRecordRepository(db_session),
+        AttendanceSessionRepository(db_session),
+        StudentRepository(db_session),
+        EnrollmentRepository(db_session),
+    )
+
+    with pytest.raises(StudentNotFoundError):
+        await service.get_student_course_summary(
+            student_id,
+            course.id,
+        )
+
+
+@pytest.mark.asyncio
+async def test_get_student_course_summary_no_records(
+    db_session,
+    student,
+    course,
+):
+    service = AttendanceRecordService(
+        AttendanceRecordRepository(db_session),
+        AttendanceSessionRepository(db_session),
+        StudentRepository(db_session),
+        EnrollmentRepository(db_session),
+    )
+
+    result = await service.get_student_course_summary(
+        student.id,
+        course.id,
+    )
+
+    assert result["student_id"] == student.id
+    assert result["course_id"] == course.id
+    assert result["total_sessions"] == 0
+    assert result["present"] == 0
+    assert result["absent"] == 0
+    assert result["attendance_percentage"] == 0.0
+
+
+@pytest.mark.asyncio
+async def test_get_student_course_summary_all_present(
+    db_session,
+    student,
+    course,
+    department,
+):
+    session_one = await create_session(
+        db_session,
+        course,
+        department,
+    )
+
+    session_two = await create_session(
+        db_session,
+        course,
+        department,
+    )
+
+    db_session.add_all(
+        [
+            AttendanceRecord(
+                session_id=session_one.id,
+                student_id=student.id,
+                status=AttendanceStatus.PRESENT,
+            ),
+            AttendanceRecord(
+                session_id=session_two.id,
+                student_id=student.id,
+                status=AttendanceStatus.PRESENT,
+            ),
+        ]
+    )
+
+    await db_session.commit()
+
+    service = AttendanceRecordService(
+        AttendanceRecordRepository(db_session),
+        AttendanceSessionRepository(db_session),
+        StudentRepository(db_session),
+        EnrollmentRepository(db_session),
+    )
+
+    result = await service.get_student_course_summary(
+        student.id,
+        course.id,
+    )
+
+    assert result["total_sessions"] == 2
+    assert result["present"] == 2
+    assert result["absent"] == 0
+    assert result["attendance_percentage"] == 100.0
+
+
+@pytest.mark.asyncio
+async def test_get_student_course_summary_all_absent(
+    db_session,
+    student,
+    course,
+    department,
+):
+    session_one = await create_session(
+        db_session,
+        course,
+        department,
+    )
+
+    session_two = await create_session(
+        db_session,
+        course,
+        department,
+    )
+
+    db_session.add_all(
+        [
+            AttendanceRecord(
+                session_id=session_one.id,
+                student_id=student.id,
+                status=AttendanceStatus.ABSENT,
+            ),
+            AttendanceRecord(
+                session_id=session_two.id,
+                student_id=student.id,
+                status=AttendanceStatus.ABSENT,
+            ),
+        ]
+    )
+
+    await db_session.commit()
+
+    service = AttendanceRecordService(
+        AttendanceRecordRepository(db_session),
+        AttendanceSessionRepository(db_session),
+        StudentRepository(db_session),
+        EnrollmentRepository(db_session),
+    )
+
+    result = await service.get_student_course_summary(
+        student.id,
+        course.id,
+    )
+
+    assert result["total_sessions"] == 2
+    assert result["present"] == 0
+    assert result["absent"] == 2
+    assert result["attendance_percentage"] == 0.0

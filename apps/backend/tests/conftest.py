@@ -1,5 +1,6 @@
 import os
 from collections.abc import AsyncGenerator
+from datetime import date, time
 
 import pytest_asyncio
 from dotenv import load_dotenv
@@ -13,6 +14,7 @@ from sqlalchemy.ext.asyncio import (
 )
 
 from app.db.session import get_db
+from app.features.attendance.model import AttendanceSession
 from app.features.courses.model import Course
 from app.features.departments.model import Department
 from app.features.students.model import Student
@@ -148,3 +150,36 @@ async def student(
     await db_session.refresh(student)
 
     return student
+
+
+@pytest_asyncio.fixture
+async def attendance_session_factory(
+    db_session: AsyncSession,
+):
+    async def create_attendance_session(
+        *,
+        course: Course,
+        department: Department,
+        session_date: date,
+        start_time: time = time(10, 0),
+        end_time: time = time(11, 0),
+        semester: int = 5,
+        section: str = "A",
+    ) -> AttendanceSession:
+        session = AttendanceSession(
+            course_id=course.id,
+            session_date=session_date,
+            start_time=start_time,
+            end_time=end_time,
+            department_id=department.id,
+            semester=semester,
+            section=section,
+        )
+
+        db_session.add(session)
+        await db_session.commit()
+        await db_session.refresh(session)
+
+        return session
+
+    return create_attendance_session

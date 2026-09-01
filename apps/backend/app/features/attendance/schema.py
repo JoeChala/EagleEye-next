@@ -56,3 +56,12 @@ class BulkAttendanceCreate(BaseModel):
 class BulkAttendanceResponse(BaseModel):
     session_id: UUID
     records: list[AttendanceRecordResponse]
+
+
+class AttendanceSummaryResponse(BaseModel):
+    student_id: UUID
+    course_id: UUID
+    total_sessions: int
+    present: int
+    absent: int
+    attendance_percentage: float

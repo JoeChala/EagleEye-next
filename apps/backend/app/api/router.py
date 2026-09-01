@@ -3,8 +3,8 @@ from fastapi.responses import JSONResponse
 
 from app.core.config import settings
 from app.db.session import check_database_connection
-from app.features.attendance.router import record_router
-from app.features.attendance.router import router as attendance_router
+from app.features.attendance.router import attendance_router, record_router
+from app.features.attendance.router import router as session_router
 from app.features.courses.router import router as course_router
 from app.features.departments.router import router as department_router
 from app.features.enrollments.router import router as enrollment_router
@@ -18,6 +18,7 @@ api_router.include_router(student_router)
 api_router.include_router(faculty_router)
 api_router.include_router(course_router)
 api_router.include_router(attendance_router)
+api_router.include_router(session_router)
 api_router.include_router(record_router)
 api_router.include_router(enrollment_router)
 

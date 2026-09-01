@@ -1,7 +1,11 @@
+from datetime import date
 from uuid import uuid4
 
 import pytest
 from httpx import AsyncClient
+
+from app.features.attendance.model import AttendanceRecord, AttendanceStatus
+from app.features.enrollments.model import Enrollment
 
 
 @pytest.mark.asyncio
@@ -105,6 +109,16 @@ async def test_create_attendance_record(client: AsyncClient, course, department)
 
     student_id = student_response.json()["id"]
 
+    enrollment_response = await client.post(
+        "/api/v1/enrollments",
+        json={
+            "student_id": student_id,
+            "course_id": str(course.id),
+        },
+    )
+
+    assert enrollment_response.status_code == 201
+
     # Create attendance
     response = await client.post(
         "/api/v1/attendance/records",
@@ -154,6 +168,15 @@ async def test_get_attendance_record(client: AsyncClient, course, department):
     )
 
     student_id = student_response.json()["id"]
+    enrollment_response = await client.post(
+        "/api/v1/enrollments",
+        json={
+            "student_id": student_id,
+            "course_id": str(course.id),
+        },
+    )
+
+    assert enrollment_response.status_code == 201
 
     create_response = await client.post(
         "/api/v1/attendance/records",
@@ -232,6 +255,15 @@ async def test_create_duplicate_attendance_record(
     )
 
     student_id = student_response.json()["id"]
+    enrollment_response = await client.post(
+        "/api/v1/enrollments",
+        json={
+            "student_id": student_id,
+            "course_id": str(course.id),
+        },
+    )
+
+    assert enrollment_response.status_code == 201
 
     payload = {
         "session_id": session_id,
@@ -282,3 +314,201 @@ async def test_create_attendance_session_invalid_course(
     assert response.json() == {
         "detail": f"Course with id '{missing_course_id}' was not found"
     }
+
+
+@pytest.mark.asyncio
+async def test_get_student_course_attendance_summary(
+    client: AsyncClient,
+    db_session,
+    student,
+    course,
+    department,
+    attendance_session_factory,
+):
+    enrollment = Enrollment(
+        student_id=student.id,
+        course_id=course.id,
+    )
+
+    db_session.add(enrollment)
+    await db_session.commit()
+
+    session_one = await attendance_session_factory(
+        course=course,
+        department=department,
+        session_date=date(2026, 8, 24),
+    )
+
+    session_two = await attendance_session_factory(
+        course=course,
+        department=department,
+        session_date=date(2026, 8, 25),
+    )
+
+    session_three = await attendance_session_factory(
+        course=course,
+        department=department,
+        session_date=date(2026, 8, 26),
+    )
+
+    db_session.add_all(
+        [
+            AttendanceRecord(
+                session_id=session_one.id,
+                student_id=student.id,
+                status=AttendanceStatus.PRESENT,
+            ),
+            AttendanceRecord(
+                session_id=session_two.id,
+                student_id=student.id,
+                status=AttendanceStatus.PRESENT,
+            ),
+            AttendanceRecord(
+                session_id=session_three.id,
+                student_id=student.id,
+                status=AttendanceStatus.ABSENT,
+            ),
+        ]
+    )
+
+    await db_session.commit()
+
+    response = await client.get(
+        "/api/v1/attendance",
+        params={
+            "student": str(student.id),
+            "course": str(course.id),
+        },
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["student_id"] == str(student.id)
+    assert data["course_id"] == str(course.id)
+    assert data["total_sessions"] == 3
+    assert data["present"] == 2
+    assert data["absent"] == 1
+    assert data["attendance_percentage"] == 66.67
+
+
+@pytest.mark.asyncio
+async def test_get_student_course_attendance_student_not_found(
+    client: AsyncClient,
+    course,
+):
+    student_id = uuid4()
+
+    response = await client.get(
+        "/api/v1/attendance",
+        params={
+            "student": str(student_id),
+            "course": str(course.id),
+        },
+    )
+
+    assert response.status_code == 404
+
+    assert response.json() == {
+        "detail": f"Student with id '{student_id}' was not found"
+    }
+
+
+@pytest.mark.asyncio
+async def test_get_student_course_attendance_no_records(
+    client: AsyncClient,
+    student,
+    course,
+):
+    enrollment_response = await client.post(
+        "/api/v1/enrollments",
+        json={
+            "student_id": str(student.id),
+            "course_id": str(course.id),
+        },
+    )
+
+    assert enrollment_response.status_code == 201
+    response = await client.get(
+        "/api/v1/attendance",
+        params={
+            "student": str(student.id),
+            "course": str(course.id),
+        },
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["student_id"] == str(student.id)
+    assert data["course_id"] == str(course.id)
+    assert data["total_sessions"] == 0
+    assert data["present"] == 0
+    assert data["absent"] == 0
+    assert data["attendance_percentage"] == 0.0
+
+
+@pytest.mark.asyncio
+async def test_get_student_course_attendance_missing_student(
+    client: AsyncClient,
+    course,
+):
+    response = await client.get(
+        "/api/v1/attendance",
+        params={
+            "course": str(course.id),
+        },
+    )
+
+    assert response.status_code == 422
+
+    data = response.json()
+
+    assert data["success"] is False
+    assert data["message"] == "Validation failed"
+    assert data["errors"]
+
+
+@pytest.mark.asyncio
+async def test_get_student_course_attendance_missing_course(
+    client: AsyncClient,
+    student,
+):
+    response = await client.get(
+        "/api/v1/attendance",
+        params={
+            "student": str(student.id),
+        },
+    )
+
+    assert response.status_code == 422
+
+    data = response.json()
+
+    assert data["success"] is False
+    assert data["message"] == "Validation failed"
+    assert data["errors"]
+
+
+@pytest.mark.asyncio
+async def test_get_student_course_attendance_invalid_student_id(
+    client: AsyncClient,
+    course,
+):
+    response = await client.get(
+        "/api/v1/attendance",
+        params={
+            "student": "not-a-uuid",
+            "course": str(course.id),
+        },
+    )
+
+    assert response.status_code == 422
+
+    data = response.json()
+
+    assert data["success"] is False
+    assert data["message"] == "Validation failed"
+    assert data["errors"]

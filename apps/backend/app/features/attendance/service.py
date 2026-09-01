@@ -10,7 +10,11 @@ from app.exceptions.errors import (
     StudentNotFoundError,
     StudentSessionMismatchError,
 )
-from app.features.attendance.model import AttendanceRecord, AttendanceSession
+from app.features.attendance.model import (
+    AttendanceRecord,
+    AttendanceSession,
+    AttendanceStatus,
+)
 from app.features.attendance.repository import (
     AttendanceRecordRepository,
     AttendanceSessionRepository,
@@ -180,3 +184,58 @@ class AttendanceRecordService:
             created_records.append(created_record)
 
         return created_records
+
+    async def get_student_course_attendance(
+        self,
+        student_id: UUID,
+        course_id: UUID,
+    ) -> list[AttendanceRecord]:
+        student = await self.student_repository.get_by_id(student_id)
+
+        if student is None:
+            raise StudentNotFoundError(student_id)
+
+        records = await self.repository.get_by_student_and_course(
+            student_id,
+            course_id,
+        )
+
+        return records
+
+    async def get_student_course_summary(
+        self,
+        student_id: UUID,
+        course_id: UUID,
+    ) -> dict:
+        student = await self.student_repository.get_by_id(student_id)
+
+        if student is None:
+            raise StudentNotFoundError(student_id)
+
+        records = await self.repository.get_by_student_and_course(
+            student_id,
+            course_id,
+        )
+
+        total_sessions = len(records)
+
+        present = sum(
+            1 for record in records if record.status == AttendanceStatus.PRESENT
+        )
+
+        absent = sum(
+            1 for record in records if record.status == AttendanceStatus.ABSENT
+        )
+
+        attendance_percentage = (
+            round((present / total_sessions) * 100, 2) if total_sessions > 0 else 0.0
+        )
+
+        return {
+            "student_id": student_id,
+            "course_id": course_id,
+            "total_sessions": total_sessions,
+            "present": present,
+            "absent": absent,
+            "attendance_percentage": attendance_percentage,
+        }
