@@ -18,6 +18,8 @@ from app.exceptions.errors import (
     FacultyNotFoundError,
     InvalidEnrollmentError,
     StudentAlreadyExistsError,
+    StudentCourseEnrollmentNotFoundError,
+    StudentNotEnrolledError,
     StudentNotFoundError,
 )
 from app.utils.responses import error_response
@@ -184,6 +186,26 @@ def _invalid_enrollment_handler(_: Request, exc: Exception):
     )
 
 
+def _student_course_not_enrolled_handler(_: Request, exc: Exception) -> JSONResponse:
+    error = cast(StudentCourseEnrollmentNotFoundError, exc)
+
+    return JSONResponse(
+        content={
+            "detail": str(error),
+        },
+        status_code=400,
+    )
+
+
+def _student_not_enrolled_handler(_: Request, exc: Exception) -> JSONResponse:
+    error = cast(StudentNotEnrolledError, exc)
+
+    return error_response(
+        message=str(error),
+        status_code=status.HTTP_400_BAD_REQUEST,
+    )
+
+
 def register_exception_handlers(app: FastAPI) -> None:
 
     app.add_exception_handler(HTTPException, _http_exception_handler)
@@ -217,3 +239,7 @@ def register_exception_handlers(app: FastAPI) -> None:
         EnrollmentNotFoundError, _enrollment_does_not_exist_handler
     )
     app.add_exception_handler(InvalidEnrollmentError, _invalid_enrollment_handler)
+    app.add_exception_handler(
+        StudentCourseEnrollmentNotFoundError, _student_course_not_enrolled_handler
+    )
+    app.add_exception_handler(StudentNotEnrolledError, _student_not_enrolled_handler)

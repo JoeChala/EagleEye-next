@@ -7,7 +7,9 @@ from app.exceptions.errors import (
     AttendanceAlreadyExistsError,
     AttendanceSessionNotFoundError,
     CourseNotFoundError,
+    StudentNotEnrolledError,
     StudentNotFoundError,
+    StudentSessionMismatchError,
 )
 from app.features.attendance.model import (
     AttendanceRecord,
@@ -25,6 +27,8 @@ from app.features.attendance.service import (
 from app.features.courses.repository import CourseRepository
 from app.features.departments.model import Department
 from app.features.departments.repository import DepartmentRepository
+from app.features.enrollments.model import Enrollment
+from app.features.enrollments.repository import EnrollmentRepository
 from app.features.students.repository import StudentRepository
 
 
@@ -173,12 +177,20 @@ async def test_create_attendance_record(db_session, course, department):
     record_repository = AttendanceRecordRepository(db_session)
     session_repository = AttendanceSessionRepository(db_session)
     student_repository = StudentRepository(db_session)
+    enrollment_repository = EnrollmentRepository(db_session)
     service = AttendanceRecordService(
-        record_repository, session_repository, student_repository
+        record_repository, session_repository, student_repository, enrollment_repository
     )
 
     session = await create_session(db_session, course, department)
     student = await create_student(db_session, department)
+    enrollment = Enrollment(
+        student_id=student.id,
+        course_id=course.id,
+    )
+
+    db_session.add(enrollment)
+    await db_session.flush()
 
     record = AttendanceRecord(
         session_id=session.id,
@@ -199,13 +211,20 @@ async def test_get_attendance_record(db_session, course, department):
     record_repository = AttendanceRecordRepository(db_session)
     session_repository = AttendanceSessionRepository(db_session)
     student_repository = StudentRepository(db_session)
+    enrollment_repository = EnrollmentRepository(db_session)
     service = AttendanceRecordService(
-        record_repository, session_repository, student_repository
+        record_repository, session_repository, student_repository, enrollment_repository
     )
 
     session = await create_session(db_session, course, department)
     student = await create_student(db_session, department)
+    enrollment = Enrollment(
+        student_id=student.id,
+        course_id=course.id,
+    )
 
+    db_session.add(enrollment)
+    await db_session.flush()
     record = AttendanceRecord(
         session_id=session.id,
         student_id=student.id,
@@ -226,8 +245,9 @@ async def test_get_attendance_record_not_found(db_session, department):
     record_repository = AttendanceRecordRepository(db_session)
     session_repository = AttendanceSessionRepository(db_session)
     student_repository = StudentRepository(db_session)
+    enrollment_repository = EnrollmentRepository(db_session)
     service = AttendanceRecordService(
-        record_repository, session_repository, student_repository
+        record_repository, session_repository, student_repository, enrollment_repository
     )
 
     result = await service.get_record(uuid4())
@@ -240,12 +260,20 @@ async def test_create_duplicate_attendance_record(db_session, course, department
     record_repository = AttendanceRecordRepository(db_session)
     session_repository = AttendanceSessionRepository(db_session)
     student_repository = StudentRepository(db_session)
+    enrollment_repository = EnrollmentRepository(db_session)
     service = AttendanceRecordService(
-        record_repository, session_repository, student_repository
+        record_repository, session_repository, student_repository, enrollment_repository
     )
 
     session = await create_session(db_session, course, department)
     student = await create_student(db_session, department)
+    enrollment = Enrollment(
+        student_id=student.id,
+        course_id=course.id,
+    )
+
+    db_session.add(enrollment)
+    await db_session.flush()
 
     first_record = AttendanceRecord(
         session_id=session.id,
@@ -271,12 +299,27 @@ async def test_create_bulk_attendance(db_session, course, department):
 
     student_one = await create_student(db_session, department)
     student_two = await create_student(db_session, department)
+    db_session.add_all(
+        [
+            Enrollment(
+                student_id=student_one.id,
+                course_id=course.id,
+            ),
+            Enrollment(
+                student_id=student_two.id,
+                course_id=course.id,
+            ),
+        ]
+    )
+
+    await db_session.flush()
 
     record_repository = AttendanceRecordRepository(db_session)
     session_repository = AttendanceSessionRepository(db_session)
     student_repository = StudentRepository(db_session)
+    enrollment_repository = EnrollmentRepository(db_session)
     service = AttendanceRecordService(
-        record_repository, session_repository, student_repository
+        record_repository, session_repository, student_repository, enrollment_repository
     )
 
     records = [
@@ -312,12 +355,20 @@ async def test_create_bulk_attendance_duplicate_student(
 ):
     session = await create_session(db_session, course, department)
     student = await create_student(db_session, department)
+    enrollment = Enrollment(
+        student_id=student.id,
+        course_id=course.id,
+    )
+
+    db_session.add(enrollment)
+    await db_session.flush()
 
     record_repository = AttendanceRecordRepository(db_session)
     session_repository = AttendanceSessionRepository(db_session)
     student_repository = StudentRepository(db_session)
+    enrollment_repository = EnrollmentRepository(db_session)
     service = AttendanceRecordService(
-        record_repository, session_repository, student_repository
+        record_repository, session_repository, student_repository, enrollment_repository
     )
 
     records = [
@@ -348,9 +399,10 @@ async def test_create_bulk_attendance_session_not_found(
     repository = AttendanceRecordRepository(db_session)
     session_repository = AttendanceSessionRepository(db_session)
     student_repository = StudentRepository(db_session)
+    enrollment_repository = EnrollmentRepository(db_session)
 
     service = AttendanceRecordService(
-        repository, session_repository, student_repository
+        repository, session_repository, student_repository, enrollment_repository
     )
 
     fake_session_id = uuid4()
@@ -379,11 +431,10 @@ async def test_create_bulk_attendance_student_not_found(
     record_repository = AttendanceRecordRepository(db_session)
     session_repository = AttendanceSessionRepository(db_session)
     student_repository = StudentRepository(db_session)
+    enrollment_repository = EnrollmentRepository(db_session)
 
     service = AttendanceRecordService(
-        record_repository,
-        session_repository,
-        student_repository,
+        record_repository, session_repository, student_repository, enrollment_repository
     )
 
     fake_student_id = uuid4()
@@ -410,6 +461,13 @@ async def test_create_bulk_attendance_student_wrong_class(
     session = await create_session(db_session, course, department)
 
     student = await create_student(db_session, department)
+    enrollment = Enrollment(
+        student_id=student.id,
+        course_id=course.id,
+    )
+
+    db_session.add(enrollment)
+    await db_session.flush()
 
     # Change the student so it doesn't belong to the session.
     ece_department = Department(
@@ -427,11 +485,10 @@ async def test_create_bulk_attendance_student_wrong_class(
     record_repository = AttendanceRecordRepository(db_session)
     session_repository = AttendanceSessionRepository(db_session)
     student_repository = StudentRepository(db_session)
+    enrollment_repository = EnrollmentRepository(db_session)
 
     service = AttendanceRecordService(
-        record_repository,
-        session_repository,
-        student_repository,
+        record_repository, session_repository, student_repository, enrollment_repository
     )
 
     record = AttendanceRecord(
@@ -440,8 +497,118 @@ async def test_create_bulk_attendance_student_wrong_class(
         status=AttendanceStatus.PRESENT,
     )
 
-    with pytest.raises(ValueError):
+    with pytest.raises(StudentSessionMismatchError):
         await service.create_bulk_records(
             session.id,
             [record],
         )
+
+
+@pytest.mark.asyncio
+async def test_create_attendance_record_student_not_enrolled(
+    db_session,
+    student,
+    course,
+    department,
+):
+    session = await create_session(
+        db_session,
+        course,
+        department,
+    )
+
+    service = AttendanceRecordService(
+        AttendanceRecordRepository(db_session),
+        AttendanceSessionRepository(db_session),
+        StudentRepository(db_session),
+        EnrollmentRepository(db_session),
+    )
+
+    record = AttendanceRecord(
+        session_id=session.id,
+        student_id=student.id,
+        status=AttendanceStatus.PRESENT,
+    )
+
+    with pytest.raises(StudentNotEnrolledError):
+        await service.create_record(record)
+
+
+@pytest.mark.asyncio
+async def test_create_attendance_record_enrolled_student(
+    db_session,
+    student,
+    course,
+    department,
+):
+    session = await create_session(
+        db_session,
+        course,
+        department,
+    )
+
+    enrollment = Enrollment(
+        student_id=student.id,
+        course_id=course.id,
+    )
+
+    db_session.add(enrollment)
+    await db_session.flush()
+
+    service = AttendanceRecordService(
+        AttendanceRecordRepository(db_session),
+        AttendanceSessionRepository(db_session),
+        StudentRepository(db_session),
+        EnrollmentRepository(db_session),
+    )
+
+    record = AttendanceRecord(
+        session_id=session.id,
+        student_id=student.id,
+        status=AttendanceStatus.PRESENT,
+    )
+
+    result = await service.create_record(record)
+
+    assert result.id is not None
+    assert result.student_id == student.id
+    assert result.session_id == session.id
+
+
+@pytest.mark.asyncio
+async def test_create_attendance_record_inactive_enrollment(
+    db_session,
+    student,
+    course,
+    department,
+):
+    session = await create_session(
+        db_session,
+        course,
+        department,
+    )
+
+    enrollment = Enrollment(
+        student_id=student.id,
+        course_id=course.id,
+        is_active=False,
+    )
+
+    db_session.add(enrollment)
+    await db_session.flush()
+
+    service = AttendanceRecordService(
+        AttendanceRecordRepository(db_session),
+        AttendanceSessionRepository(db_session),
+        StudentRepository(db_session),
+        EnrollmentRepository(db_session),
+    )
+
+    record = AttendanceRecord(
+        session_id=session.id,
+        student_id=student.id,
+        status=AttendanceStatus.PRESENT,
+    )
+
+    with pytest.raises(StudentNotEnrolledError):
+        await service.create_record(record)

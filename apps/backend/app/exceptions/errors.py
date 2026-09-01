@@ -93,3 +93,18 @@ class StudentCourseEnrollmentNotFoundError(Exception):
             f"Enrollment for student '{student_id}' "
             f"in course '{course_id}' was not found"
         )
+
+
+class StudentNotEnrolledError(Exception):
+    def __init__(self, student_id: UUID, course_id: UUID):
+        super().__init__(
+            f"Student '{student_id}' is not enrolled in course '{course_id}'"
+        )
+
+
+class StudentSessionMismatchError(Exception):
+    def __init__(self, student_id: UUID):
+        super().__init__(
+            f"Student '{student_id}' does not belong to "
+            "the session's department, semester, and section"
+        )

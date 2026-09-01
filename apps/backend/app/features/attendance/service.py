@@ -6,7 +6,9 @@ from app.exceptions.errors import (
     AttendanceSessionNotFoundError,
     CourseNotFoundError,
     DepartmentNotFoundError,
+    StudentNotEnrolledError,
     StudentNotFoundError,
+    StudentSessionMismatchError,
 )
 from app.features.attendance.model import AttendanceRecord, AttendanceSession
 from app.features.attendance.repository import (
@@ -15,6 +17,7 @@ from app.features.attendance.repository import (
 )
 from app.features.courses.repository import CourseRepository
 from app.features.departments.repository import DepartmentRepository
+from app.features.enrollments.repository import EnrollmentRepository
 from app.features.students.repository import StudentRepository
 
 
@@ -66,15 +69,35 @@ class AttendanceRecordService:
         repository: AttendanceRecordRepository,
         session_repository: AttendanceSessionRepository,
         student_repository: StudentRepository,
+        enrollment_repository: EnrollmentRepository,
     ):
         self.repository = repository
         self.session_repository = session_repository
         self.student_repository = student_repository
+        self.enrollment_repository = enrollment_repository
 
-    async def create_record(
-        self,
-        record: AttendanceRecord,
-    ) -> AttendanceRecord:
+    async def create_record(self, record: AttendanceRecord) -> AttendanceRecord:
+        session = await self.session_repository.get_by_id(record.session_id)
+
+        if session is None:
+            raise AttendanceSessionNotFoundError(record.session_id)
+
+        student = await self.student_repository.get_by_id(record.student_id)
+
+        if student is None:
+            raise StudentNotFoundError(record.student_id)
+
+        enrollment = await self.enrollment_repository.get_by_student_and_course(
+            record.student_id,
+            session.course_id,
+        )
+
+        if enrollment is None or not enrollment.is_active:
+            raise StudentNotEnrolledError(
+                record.student_id,
+                session.course_id,
+            )
+
         existing = await self.repository.get_by_session_and_student(
             record.session_id,
             record.student_id,
@@ -85,12 +108,10 @@ class AttendanceRecordService:
                 session_id=record.session_id,
                 student_id=record.student_id,
             )
+
         return await self.repository.create(record)
 
-    async def get_record(
-        self,
-        record_id: UUID,
-    ) -> AttendanceRecord | None:
+    async def get_record(self, record_id: UUID) -> AttendanceRecord | None:
         return await self.repository.get_by_id(record_id)
 
     async def create_bulk_records(
@@ -116,10 +137,13 @@ class AttendanceRecordService:
                 or student.semester != session.semester
                 or student.section != session.section
             ):
-                raise ValueError(
-                    f"Student '{student.id}' does not belong to "
-                    "the session's department, semester, and section"
-                )
+                raise StudentSessionMismatchError(student.id)
+
+            enrollment = await self.enrollment_repository.get_by_student_and_course(
+                record.student_id, session.course_id
+            )
+            if enrollment is None or not enrollment.is_active:
+                raise StudentNotEnrolledError(record.student_id, session.course_id)
 
         # Check duplicates SECOND
         seen_students: set[UUID] = set()
